@@ -3,3 +3,11 @@
 README.md
 renovate.json
 .github
+
+# Exclude user config but keep example
+opencode.json
+!opencode.json.example
+
+# Exclude Helm release artifacts
+*.tgz
+index.yaml

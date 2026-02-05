@@ -1,0 +1,272 @@
+# Default values for opencode Helm chart
+
+image:
+  repository: ghcr.io/fluxbase-eu/opencode-docker
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+service:
+  type: ClusterIP
+  port: 4096
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: opencode.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: opencode-tls
+  #    hosts:
+  #      - opencode.example.com
+
+# OpenCode Configuration
+# See: https://opencode.ai/docs/config/
+opencode:
+  # Server settings
+  server:
+    hostname: "0.0.0.0"
+    port: 4096
+    # Optional: mDNS configuration
+    # mdns: true
+    # mdnsDomain: "opencode.local"
+    # Optional: CORS origins
+    # cors: ["http://localhost:5173"]
+
+  # Model configuration
+  model: "anthropic/claude-sonnet-4-5"
+  smallModel: "anthropic/claude-haiku-4-5"
+
+  # Theme
+  theme: ""
+
+  # Feature flags
+  autoupdate: true
+  share: "manual"  # "auto", "manual", or "disabled"
+
+  # Provider configuration
+  provider:
+    # Anthropic (Claude)
+    anthropic:
+      options:
+        timeout: 300000
+        # apiKey will be loaded from ANTHROPIC_API_KEY env var
+
+    # OpenAI (GPT models)
+    # openai:
+    #   options:
+    #     timeout: 300000
+    #     # baseURL: "https://api.openai.com/v1"
+    #     # apiKey will be loaded from OPENAI_API_KEY env var
+
+    # Google Gemini
+    # gemini:
+    #   options:
+    #     timeout: 300000
+    #     # apiKey will be loaded from GEMINI_API_KEY env var
+
+    # AWS Bedrock
+    # awsBedrock:
+    #   options:
+    #     region: "us-east-1"
+    #     # profile: "my-aws-profile"
+
+    # Google Vertex AI
+    # vertex:
+    #   options:
+    #     timeout: 300000
+    #     projectId: "my-project-id"
+    #     # apiKey will be loaded from GOOGLE_API_KEY env var
+
+    # OpenRouter
+    # openrouter:
+    #   options:
+    #     timeout: 300000
+    #     # baseURL: "https://openrouter.ai/api/v1"
+    #     # apiKey will be loaded from OPENROUTER_API_KEY env var
+
+  # Tools configuration
+  tools:
+    bash: true
+    write: true
+    edit: true
+
+  # Permissions (require user approval for specific tools)
+  # permission:
+  #   edit: "ask"
+  #   bash: "ask"
+
+  # TUI settings
+  # tui:
+  #   scrollSpeed: 3
+  #   diffStyle: "auto"
+
+  # File watcher ignore patterns
+  # watcher:
+  #   ignore: ["node_modules/**", "dist/**", ".git/**"]
+
+  # Custom instructions
+  # instructions: ["CONTRIBUTING.md"]
+
+  # Disabled providers
+  # disabledProviders: ["openai", "gemini"]
+
+# Secret references for sensitive values
+# These will be injected as environment variables using secretKeyRef
+secrets:
+  # Anthropic API key
+  anthropicApiKey:
+    name: opencode-credentials
+    key: anthropic-api-key
+    enabled: true
+
+  # OpenAI API key
+  # openaiApiKey:
+  #   name: opencode-credentials
+  #   key: openai-api-key
+  #   enabled: false
+
+  # Gemini API key
+  # geminiApiKey:
+  #   name: opencode-credentials
+  #   key: gemini-api-key
+  #   enabled: false
+
+  # Google API key (for Vertex AI)
+  # googleApiKey:
+  #   name: opencode-credentials
+  #   key: google-api-key
+  #   enabled: false
+
+  # OpenRouter API key
+  # openrouterApiKey:
+  #   name: opencode-credentials
+  #   key: openrouter-api-key
+  #   enabled: false
+
+# Extra environment variables (beyond those from secrets and config)
+extraEnv: []
+# Example:
+# extraEnv:
+#   - name: CUSTOM_VAR
+#     value: "custom-value"
+#   - name: FROM_SECRET
+#     valueFrom:
+#       secretKeyRef:
+#         name: my-secret
+#         key: my-key
+
+# Extra environment variables (beyond those from secrets and config)
+extraEnv: []
+# Example:
+# extraEnv:
+#   - name: CUSTOM_VAR
+#     value: "custom-value"
+#   - name: FROM_SECRET
+#     valueFrom:
+#       secretKeyRef:
+#         name: my-secret
+#         key: my-key
+
+persistence:
+  enabled: true
+  # Storage class for PVCs
+  # If not set, the cluster's default storage class will be used
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  # Size for each PVC
+  size: 1Gi
+
+  # Individual PVC configurations
+  config:
+    enabled: true
+    size: null  # Uses persistence.size if null
+  data:
+    enabled: true
+    size: null  # Uses persistence.size if null
+  workspace:
+    enabled: true
+    size: null  # Uses persistence.size if null
+
+resources:
+  limits:
+    cpu: 2
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Probes configuration
+probes:
+  liveness:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  readiness:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
+  startup:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 30

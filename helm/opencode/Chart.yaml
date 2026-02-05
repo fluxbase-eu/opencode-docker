@@ -1,0 +1,19 @@
+apiVersion: v2
+name: opencode
+description: A Helm chart for OpenCode AI coding assistant
+type: application
+version: 0.1.0
+appVersion: "latest"
+icon: https://opencode.ai/favicon.ico
+keywords:
+  - opencode
+  - ai
+  - coding-assistant
+  - anthropic
+home: https://github.com/fluxbase-eu/opencode-docker
+sources:
+  - https://github.com/anthropics/opencode
+  - https://github.com/fluxbase-eu/opencode-docker
+maintainers:
+  - name: fluxbase-eu
+    url: https://github.com/fluxbase-eu

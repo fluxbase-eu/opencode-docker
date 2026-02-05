@@ -1,0 +1,159 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "opencode.fullname" . }}
+  labels:
+    {{- include "opencode.labels" . | nindent 4 }}
+data:
+  opencode.json: |
+    {
+      "$schema": "https://opencode.ai/config.json",
+      {{- if .Values.opencode.server }}
+      "server": {
+        {{- if .Values.opencode.server.hostname }}
+        "hostname": {{ .Values.opencode.server.hostname | quote }}{{ if .Values.opencode.server.port }},{{ end }}
+        {{- end }}
+        {{- if .Values.opencode.server.port }}
+        "port": {{ .Values.opencode.server.port }}{{ if or .Values.opencode.server.mdns .Values.opencode.server.mdnsDomain .Values.opencode.server.cors }},{{ end }}
+        {{- end }}
+        {{- if .Values.opencode.server.mdns }}
+        "mdns": {{ .Values.opencode.server.mdns }}{{ if or .Values.opencode.server.mdnsDomain .Values.opencode.server.cors }},{{ end }}
+        {{- end }}
+        {{- if .Values.opencode.server.mdnsDomain }}
+        "mdnsDomain": {{ .Values.opencode.server.mdnsDomain | quote }}{{ if .Values.opencode.server.cors }},{{ end }}
+        {{- end }}
+        {{- if .Values.opencode.server.cors }}
+        "cors": {{ .Values.opencode.server.cors | toJson }}
+        {{- end }}
+      }{{ if or .Values.opencode.model .Values.opencode.smallModel .Values.opencode.theme .Values.opencode.autoupdate .Values.opencode.share .Values.opencode.provider .Values.opencode.tools }},{{ end }}
+      {{- end }}
+
+      {{- if .Values.opencode.model }}
+      "model": "{env:OPENCODE_MODEL}"{{ if or .Values.opencode.smallModel .Values.opencode.theme .Values.opencode.autoupdate .Values.opencode.share .Values.opencode.provider .Values.opencode.tools }},{{ end }}
+      {{- end }}
+
+      {{- if .Values.opencode.smallModel }}
+      "small_model": "{env:OPENCODE_SMALL_MODEL}"{{ if or .Values.opencode.theme .Values.opencode.autoupdate .Values.opencode.share .Values.opencode.provider .Values.opencode.tools }},{{ end }}
+      {{- end }}
+
+      {{- if .Values.opencode.theme }}
+      "theme": {{ .Values.opencode.theme | quote }}{{ if or .Values.opencode.autoupdate .Values.opencode.share .Values.opencode.provider .Values.opencode.tools }},{{ end }}
+      {{- end }}
+
+      {{- if .Values.opencode.autoupdate }}
+      "autoupdate": {{ .Values.opencode.autoupdate }}{{ if or .Values.opencode.share .Values.opencode.provider .Values.opencode.tools }},{{ end }}
+      {{- end }}
+
+      {{- if .Values.opencode.share }}
+      "share": {{ .Values.opencode.share | quote }}{{ if or .Values.opencode.provider .Values.opencode.tools }},{{ end }}
+      {{- end }}
+
+      {{- if .Values.opencode.provider }}
+      "provider": {
+        {{- $providers := list }}
+        {{- if .Values.opencode.provider.anthropic }}
+        {{- $providers = append $providers "anthropic" }}
+        {{- end }}
+        {{- if .Values.opencode.provider.openai }}
+        {{- $providers = append $providers "openai" }}
+        {{- end }}
+        {{- if .Values.opencode.provider.gemini }}
+        {{- $providers = append $providers "gemini" }}
+        {{- end }}
+        {{- if .Values.opencode.provider.awsBedrock }}
+        {{- $providers = append $providers "amazon-bedrock" }}
+        {{- end }}
+        {{- if .Values.opencode.provider.vertex }}
+        {{- $providers = append $providers "vertex" }}
+        {{- end }}
+        {{- if .Values.opencode.provider.openrouter }}
+        {{- $providers = append $providers "openrouter" }}
+        {{- end }}
+        {{- range $idx, $provider := $providers }}
+        {{- if ne $idx 0 }},{{ end }}
+        {{- if eq $provider "anthropic" }}
+        "anthropic": {
+          "options": {
+            {{- if $.Values.opencode.provider.anthropic.options }}
+            {{- if $.Values.opencode.provider.anthropic.options.timeout }}
+            "timeout": {{ $.Values.opencode.provider.anthropic.options.timeout }},
+            {{- end }}
+            {{- end }}
+            "apiKey": "{env:ANTHROPIC_API_KEY}"
+          }
+        }
+        {{- else if eq $provider "openai" }}
+        "openai": {
+          "options": {
+            {{- if $.Values.opencode.provider.openai.options }}
+            {{- if $.Values.opencode.provider.openai.options.timeout }}
+            "timeout": {{ $.Values.opencode.provider.openai.options.timeout }},
+            {{- end }}
+            {{- if $.Values.opencode.provider.openai.options.baseURL }}
+            "baseURL": {{ $.Values.opencode.provider.openai.options.baseURL | quote }},
+            {{- end }}
+            {{- end }}
+            "apiKey": "{env:OPENAI_API_KEY}"
+          }
+        }
+        {{- else if eq $provider "gemini" }}
+        "gemini": {
+          "options": {
+            {{- if $.Values.opencode.provider.gemini.options }}
+            {{- if $.Values.opencode.provider.gemini.options.timeout }}
+            "timeout": {{ $.Values.opencode.provider.gemini.options.timeout }},
+            {{- end }}
+            {{- end }}
+            "apiKey": "{env:GEMINI_API_KEY}"
+          }
+        }
+        {{- else if eq $provider "amazon-bedrock" }}
+        "amazon-bedrock": {
+          "options": {
+            {{- if $.Values.opencode.provider.awsBedrock.options }}
+            {{- if $.Values.opencode.provider.awsBedrock.options.region }}
+            "region": {{ $.Values.opencode.provider.awsBedrock.options.region | quote }},
+            {{- end }}
+            {{- if $.Values.opencode.provider.awsBedrock.options.profile }}
+            "profile": {{ $.Values.opencode.provider.awsBedrock.options.profile | quote }},
+            {{- end }}
+            {{- end }}
+          }
+        }
+        {{- else if eq $provider "vertex" }}
+        "vertex": {
+          "options": {
+            {{- if $.Values.opencode.provider.vertex.options }}
+            {{- if $.Values.opencode.provider.vertex.options.timeout }}
+            "timeout": {{ $.Values.opencode.provider.vertex.options.timeout }},
+            {{- end }}
+            {{- if $.Values.opencode.provider.vertex.options.projectId }}
+            "projectId": {{ $.Values.opencode.provider.vertex.options.projectId | quote }},
+            {{- end }}
+            {{- end }}
+            "apiKey": "{env:GOOGLE_API_KEY}"
+          }
+        }
+        {{- else if eq $provider "openrouter" }}
+        "openrouter": {
+          "options": {
+            {{- if $.Values.opencode.provider.openrouter.options }}
+            {{- if $.Values.opencode.provider.openrouter.options.timeout }}
+            "timeout": {{ $.Values.opencode.provider.openrouter.options.timeout }},
+            {{- end }}
+            {{- if $.Values.opencode.provider.openrouter.options.baseURL }}
+            "baseURL": {{ $.Values.opencode.provider.openrouter.options.baseURL | quote }},
+            {{- end }}
+            {{- end }}
+            "apiKey": "{env:OPENROUTER_API_KEY}"
+          }
+        }
+        {{- end }}
+        {{- end }}
+      }{{ if .Values.opencode.tools }},{{ end }}
+      {{- end }}
+
+      {{- if .Values.opencode.tools }}
+      "tools": {{ .Values.opencode.tools | toJson }}
+      {{- end }}
+    }

@@ -1,0 +1,183 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opencode.fullname" . }}
+  labels:
+    {{- include "opencode.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: 1
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "opencode.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "opencode.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "opencode.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            # Point to the ConfigMap-mounted config file
+            - name: OPENCODE_CONFIG
+              value: /etc/opencode/opencode.json
+
+            # Model configuration (referenced by the config file)
+            {{- if .Values.opencode.model }}
+            - name: OPENCODE_MODEL
+              value: {{ .Values.opencode.model | quote }}
+            {{- end }}
+            {{- if .Values.opencode.smallModel }}
+            - name: OPENCODE_SMALL_MODEL
+              value: {{ .Values.opencode.smallModel | quote }}
+            {{- end }}
+
+            # API keys from secrets (referenced by the config file)
+            {{- if and .Values.secrets.anthropicApiKey .Values.secrets.anthropicApiKey.enabled }}
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.anthropicApiKey.name }}
+                  key: {{ .Values.secrets.anthropicApiKey.key }}
+            {{- end }}
+
+            {{- if and .Values.secrets.openaiApiKey .Values.secrets.openaiApiKey.enabled }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.openaiApiKey.name }}
+                  key: {{ .Values.secrets.openaiApiKey.key }}
+            {{- end }}
+
+            {{- if and .Values.secrets.geminiApiKey .Values.secrets.geminiApiKey.enabled }}
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.geminiApiKey.name }}
+                  key: {{ .Values.secrets.geminiApiKey.key }}
+            {{- end }}
+
+            {{- if and .Values.secrets.googleApiKey .Values.secrets.googleApiKey.enabled }}
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.googleApiKey.name }}
+                  key: {{ .Values.secrets.googleApiKey.key }}
+            {{- end }}
+
+            {{- if and .Values.secrets.openrouterApiKey .Values.secrets.openrouterApiKey.enabled }}
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.openrouterApiKey.name }}
+                  key: {{ .Values.secrets.openrouterApiKey.key }}
+            {{- end }}
+
+            # Extra environment variables
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.httpGet.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.httpGet.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup.httpGet.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            successThreshold: {{ .Values.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          {{- end }}
+          volumeMounts:
+            # Mount the ConfigMap containing OpenCode config
+            - name: opencode-config
+              mountPath: /etc/opencode
+              readOnly: true
+            {{- if .Values.persistence.config.enabled }}
+            - name: config
+              mountPath: /home/opencode/.config/opencode
+            {{- end }}
+            {{- if .Values.persistence.data.enabled }}
+            - name: data
+              mountPath: /home/opencode/.local/share/opencode
+            {{- end }}
+            {{- if .Values.persistence.workspace.enabled }}
+            - name: workspace
+              mountPath: /workspace
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        # ConfigMap with OpenCode configuration
+        - name: opencode-config
+          configMap:
+            name: {{ include "opencode.fullname" . }}
+        {{- if .Values.persistence.config.enabled }}
+        - name: config
+          persistentVolumeClaim:
+            claimName: {{ include "opencode.fullname" . }}-config
+        {{- end }}
+        {{- if .Values.persistence.data.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "opencode.fullname" . }}-data
+        {{- end }}
+        {{- if .Values.persistence.workspace.enabled }}
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: {{ include "opencode.fullname" . }}-workspace
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

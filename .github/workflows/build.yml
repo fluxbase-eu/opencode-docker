@@ -31,25 +31,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch latest OpenCode version
-        id: fetch_version
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: |
-          # Get the latest release from OpenCode's GitHub repo
-          LATEST_VERSION=$(gh release view --repo anthropics/opencode --json tagName --jq '.tagName' | sed 's/^v//')
-          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-
       - name: Get current released version
         id: current_version
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           # Get the latest release version from this repo
           CURRENT_VERSION=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName' | sed 's/^v//' || echo "none")
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch latest OpenCode version
+        id: fetch_version
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || steps.current_version.outputs.current_version == 'none'
+        run: |
+          # Get the latest release from OpenCode's GitHub repo
+          LATEST_VERSION=$(gh release view --repo anthropics/opencode --json tagName --jq '.tagName' | sed 's/^v//')
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Compare versions
         id: version_check
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || steps.current_version.outputs.current_version == 'none'
         run: |
           LATEST="${{ steps.fetch_version.outputs.latest_version }}"
           CURRENT="${{ steps.current_version.outputs.current_version }}"
@@ -66,8 +69,6 @@ jobs:
             echo "should_release=false" >> $GITHUB_OUTPUT
             echo "::notice::Already up to date"
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set job outputs
         id: set_outputs
@@ -75,6 +76,10 @@ jobs:
           if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "new_version=${{ steps.version_check.outputs.new_version }}" >> $GITHUB_OUTPUT
             echo "should_release=${{ steps.version_check.outputs.should_release }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ steps.current_version.outputs.current_version }}" = "none" ]; then
+            # First release - use latest OpenCode version
+            echo "new_version=${{ steps.fetch_version.outputs.latest_version }}" >> $GITHUB_OUTPUT
+            echo "should_release=true" >> $GITHUB_OUTPUT
           else
             echo "new_version=" >> $GITHUB_OUTPUT
             echo "should_release=false" >> $GITHUB_OUTPUT

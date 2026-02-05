@@ -1,0 +1,49 @@
+{{- if .Values.persistence.enabled }}
+{{- if .Values.persistence.config.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "opencode.fullname" . }}-config
+  labels:
+    {{- include "opencode.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.config.size | default .Values.persistence.size }}
+{{- end }}
+
+{{- if .Values.persistence.data.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "opencode.fullname" . }}-data
+  labels:
+    {{- include "opencode.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.data.size | default .Values.persistence.size }}
+{{- end }}
+
+{{- if .Values.persistence.workspace.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "opencode.fullname" . }}-workspace
+  labels:
+    {{- include "opencode.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.workspace.size | default .Values.persistence.size }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,173 @@
+name: Publish Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'helm/opencode/**'
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type (patch, minor, major)'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  publish-helm-chart:
+    name: Publish Helm Chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current chart version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(grep '^version:' helm/opencode/Chart.yaml | awk '{print $2}')
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current chart version: $CURRENT_VERSION"
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            BUMP_TYPE="${{ github.event.inputs.version_bump }}"
+          else
+            # Auto-detect bump type from commit messages
+            BUMP_TYPE="patch"
+
+            # Get commits since last tag that touched helm/
+            COMMITS=$(git log --oneline --grep="helm" --grep="chart" --grep="k8s" --grep="kubernetes" -i -- helm/opencode/ | head -20)
+
+            if echo "$COMMITS" | grep -iE "feat|feature|add|new"; then
+              BUMP_TYPE="minor"
+            elif echo "$COMMITS" | grep -iE "break|major|incompatible"; then
+              BUMP_TYPE="major"
+            fi
+          fi
+
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "Version bump type: $BUMP_TYPE"
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          CURRENT="${{ steps.current_version.outputs.current_version }}"
+
+          # Parse semver
+          IFS='.' read -ra PARTS <<< "$CURRENT"
+          MAJOR=${PARTS[0]}
+          MINOR=${PARTS[1]}
+          PATCH=${PARTS[2]}
+
+          BUMP="${{ steps.bump.outputs.bump_type }}"
+
+          case "$BUMP" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update chart version
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          sed -i "s/^version:.*/version: $NEW_VERSION/" helm/opencode/Chart.yaml
+          echo "Updated Chart.yaml to version $NEW_VERSION"
+
+      - name: Commit version bump
+        run: |
+          git add helm/opencode/Chart.yaml
+          git commit -m "chore(helm): Bump chart version to ${{ steps.new_version.outputs.new_version }}"
+
+      - name: Push version bump
+        run: |
+          git push
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.14.0'
+
+      - name: Package Helm chart
+        run: |
+          cd helm/opencode
+          helm package .
+          mv opencode-*.tgz ../../
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.new_version.outputs.new_version }}"
+          CHART_FILE="opencode-$VERSION.tgz"
+
+          # Create release
+          gh release create "helm-v$VERSION" \
+            --title "Helm Chart v$VERSION" \
+            --notes "## Helm Chart Release v$VERSION
+
+            This release updates the OpenCode Helm chart to version $VERSION.
+
+            ### Installation
+
+            \`\`\`bash
+            helm install opencode ./helm/opencode
+            \`\`\`
+
+            Or from the release artifact:
+            \`\`\`bash
+            helm install opencode https://github.com/fluxbase-eu/opencode-docker/releases/download/helm-v$VERSION/opencode-$VERSION.tgz
+            \`\`\`
+
+            **Version Bump**: ${{ steps.bump.outputs.bump_type }}
+            **Previous Version**: ${{ steps.current_version.outputs.current_version }}
+            **New Version**: $VERSION
+            " \
+            "$CHART_FILE"
+
+      - name: Update Helm repository index
+        run: |
+          # Create or update Helm repo index
+          if [ -f index.yaml ]; then
+            helm repo index . --url https://github.com/fluxbase-eu/opencode-docker/releases/download --merge index.yaml
+          else
+            helm repo index . --url https://github.com/fluxbase-eu/opencode-docker/releases/download
+          fi
+
+      - name: Upload index to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.new_version.outputs.new_version }}"
+
+          # Upload updated index.yaml to the release
+          gh release upload "helm-v$VERSION" index.yaml --clobber
