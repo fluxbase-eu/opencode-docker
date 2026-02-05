@@ -186,18 +186,12 @@ jobs:
         run: |
           VERSION="${{ steps.new_version.outputs.new_version }}"
           CHART_PATH="oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}"
-          CHART_TAG="$CHART_PATH:$VERSION"
-          LATEST_TAG="$CHART_PATH:latest"
 
           # Package and push the chart
           cd helm/opencode
           helm package .
 
-          # Push with version tag
-          helm push opencode-*.tgz "$CHART_TAG"
+          # Push to GHCR (Helm automatically uses version from Chart.yaml)
+          helm push opencode-*.tgz "$CHART_PATH"
 
-          # Also tag as latest
-          helm push opencode-*.tgz "$LATEST_TAG"
-
-          echo "Published Helm chart to $CHART_TAG"
-          echo "Published Helm chart to $LATEST_TAG"
+          echo "Published Helm chart $VERSION to $CHART_PATH"
