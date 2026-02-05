@@ -197,25 +197,33 @@ OPENCODE_PORT=8080 docker-compose up -d
 
 ## Kubernetes / Helm
 
-A Helm chart is provided for Kubernetes deployments.
+A Helm chart is provided for Kubernetes deployments and published to GitHub Container Registry (GHCR).
 
 ### Installation
 
 ```bash
+# Install from GHCR (recommended)
+helm install opencode oci://ghcr.io/fluxbase-eu/opencode
+
+# Install specific version from GHCR
+helm install opencode oci://ghcr.io/fluxbase-eu/opencode --version 0.1.0
+
 # Install from local directory
 helm install opencode ./helm/opencode
 
-# Install from GitHub releases
-helm install opencode oci://ghcr.io/fluxbase-eu/helm-charts/opencode
-
-# Or download specific version from releases
-helm install opencode https://github.com/fluxbase-eu/opencode-docker/releases/download/helm-v0.1.0/opencode-0.1.0.tgz
-
 # With custom values
-helm install opencode ./helm/opencode -f custom-values.yaml
+helm install opencode oci://ghcr.io/fluxbase-eu/opencode -f custom-values.yaml
 ```
 
-**Note**: The Helm chart uses semantic versioning and is automatically published when changes are made to the `helm/opencode/` directory.
+### Available Versions
+
+To list available versions:
+
+```bash
+helm search repo ghcr.io/fluxbase-eu/opencode --versions
+```
+
+**Note**: The Helm chart uses semantic versioning and is automatically published to GHCR when changes are made to the `helm/opencode/` directory.
 
 ### Configuration
 
@@ -235,6 +243,7 @@ kubectl create secret generic opencode-credentials \
   --from-literal=gemini-api-key=your-gemini-key \
   --from-literal=google-api-key=your-google-key \
   --from-literal=openrouter-api-key=your-openrouter-key \
+  --from-literal=zai-api-key=your-zai-key \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
