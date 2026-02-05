@@ -82,6 +82,9 @@ data:
         {{- if .Values.opencode.provider.openrouter }}
         {{- $providers = append $providers "openrouter" }}
         {{- end }}
+        {{- if .Values.opencode.provider.zai }}
+        {{- $providers = append $providers "zai" }}
+        {{- end }}
         {{- range $idx, $provider := $providers }}
         {{- if ne $idx 0 }},{{ end }}
         {{- if eq $provider "anthropic" }}
@@ -148,6 +151,31 @@ data:
             {{- end }}
             "apiKey": "{env:OPENROUTER_API_KEY}"
           }
+        }
+        {{- else if eq $provider "zai" }}
+        "{{ $.Values.opencode.provider.zai.id | default "zai-coding-plan" }}": {
+          {{- if $.Values.opencode.provider.zai.name }}
+          "name": {{ $.Values.opencode.provider.zai.name | quote }},
+          {{- end }}
+          "options": {
+            {{- if $.Values.opencode.provider.zai.options.timeout }}
+            "timeout": {{ $.Values.opencode.provider.zai.options.timeout }},
+            {{- end }}
+            {{- if $.Values.opencode.provider.zai.options.baseURL }}
+            "baseURL": {{ $.Values.opencode.provider.zai.options.baseURL | quote }},
+            {{- end }}
+            "apiKey": "{env:ZAI_API_KEY}"
+          }{{- if $.Values.opencode.provider.zai.models }},
+          "models": {
+            {{- $models := $.Values.opencode.provider.zai.models }}
+            {{- range $modelId, $modelConfig := $models }}
+            {{- $modelId }}: {
+              {{- if $modelConfig.name }}
+              "name": {{ $modelConfig.name | quote }}
+              {{- end }}
+            }{{- if ne $modelId (last (keys $models)) }},{{- end }}
+            {{- end }}
+          }{{- end }}
         }
         {{- end }}
         {{- end }}

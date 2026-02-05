@@ -112,6 +112,14 @@ spec:
                   key: {{ .Values.secrets.openrouterApiKey.key }}
             {{- end }}
 
+            {{- if and .Values.secrets.zaiApiKey .Values.secrets.zaiApiKey.enabled }}
+            - name: ZAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.zaiApiKey.name }}
+                  key: {{ .Values.secrets.zaiApiKey.key }}
+            {{- end }}
+
             # Extra environment variables
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}

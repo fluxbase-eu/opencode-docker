@@ -164,10 +164,10 @@ opencode:
   # Provider configuration
   provider:
     # Anthropic (Claude)
-    anthropic:
-      options:
-        timeout: 300000
-        # apiKey will be loaded from ANTHROPIC_API_KEY env var
+    # anthropic:
+    #   options:
+    #     timeout: 300000
+    #     # apiKey will be loaded from ANTHROPIC_API_KEY env var
 
     # OpenAI (GPT models)
     # openai:
@@ -201,6 +201,19 @@ opencode:
     #     timeout: 300000
     #     # baseURL: "https://openrouter.ai/api/v1"
     #     # apiKey will be loaded from OPENROUTER_API_KEY env var
+
+    # Z.AI (GLM models)
+    # zai:
+    #   id: "zai-coding-plan"  # Provider ID in OpenCode
+    #   name: "Z.AI Coding Plan"  # Display name
+    #   options:
+    #     timeout: 300000
+    #     baseURL: "https://api.z.ai/api/coding/paas/v4"
+    #     # apiKey will be loaded from ZAI_API_KEY env var
+    #   models:
+    #     glm-4.7:
+    #       name: "glm-4.7"
+    #     # Add more models as needed
 
   # Tools configuration
   tools:
@@ -259,6 +272,12 @@ secrets:
   # openrouterApiKey:
   #   name: opencode-credentials
   #   key: openrouter-api-key
+  #   enabled: false
+
+  # Z.AI API key
+  # zaiApiKey:
+  #   name: opencode-credentials
+  #   key: zai-api-key
   #   enabled: false
 
 # ConfigMap labels and annotations (in addition to global labels/annotations)
