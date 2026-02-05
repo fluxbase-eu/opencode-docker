@@ -6,6 +6,16 @@ metadata:
   name: {{ include "opencode.fullname" . }}-config
   labels:
     {{- include "opencode.labels" . | nindent 4 }}
+    {{- with .Values.globalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.pvcLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with or .Values.globalAnnotations .Values.pvcAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.persistence.accessMode }}
@@ -22,6 +32,16 @@ metadata:
   name: {{ include "opencode.fullname" . }}-data
   labels:
     {{- include "opencode.labels" . | nindent 4 }}
+    {{- with .Values.globalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.pvcLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with or .Values.globalAnnotations .Values.pvcAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.persistence.accessMode }}
@@ -38,6 +58,16 @@ metadata:
   name: {{ include "opencode.fullname" . }}-workspace
   labels:
     {{- include "opencode.labels" . | nindent 4 }}
+    {{- with .Values.globalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.pvcLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with or .Values.globalAnnotations .Values.pvcAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.persistence.accessMode }}

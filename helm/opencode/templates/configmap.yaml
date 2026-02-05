@@ -4,6 +4,19 @@ metadata:
   name: {{ include "opencode.fullname" . }}
   labels:
     {{- include "opencode.labels" . | nindent 4 }}
+    {{- with .Values.globalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.configMapLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .Values.globalAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.configMapAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 data:
   opencode.json: |
     {
@@ -74,10 +87,8 @@ data:
         {{- if eq $provider "anthropic" }}
         "anthropic": {
           "options": {
-            {{- if $.Values.opencode.provider.anthropic.options }}
             {{- if $.Values.opencode.provider.anthropic.options.timeout }}
             "timeout": {{ $.Values.opencode.provider.anthropic.options.timeout }},
-            {{- end }}
             {{- end }}
             "apiKey": "{env:ANTHROPIC_API_KEY}"
           }
@@ -85,13 +96,11 @@ data:
         {{- else if eq $provider "openai" }}
         "openai": {
           "options": {
-            {{- if $.Values.opencode.provider.openai.options }}
             {{- if $.Values.opencode.provider.openai.options.timeout }}
             "timeout": {{ $.Values.opencode.provider.openai.options.timeout }},
             {{- end }}
             {{- if $.Values.opencode.provider.openai.options.baseURL }}
             "baseURL": {{ $.Values.opencode.provider.openai.options.baseURL | quote }},
-            {{- end }}
             {{- end }}
             "apiKey": "{env:OPENAI_API_KEY}"
           }
@@ -99,10 +108,8 @@ data:
         {{- else if eq $provider "gemini" }}
         "gemini": {
           "options": {
-            {{- if $.Values.opencode.provider.gemini.options }}
             {{- if $.Values.opencode.provider.gemini.options.timeout }}
             "timeout": {{ $.Values.opencode.provider.gemini.options.timeout }},
-            {{- end }}
             {{- end }}
             "apiKey": "{env:GEMINI_API_KEY}"
           }
@@ -110,26 +117,22 @@ data:
         {{- else if eq $provider "amazon-bedrock" }}
         "amazon-bedrock": {
           "options": {
-            {{- if $.Values.opencode.provider.awsBedrock.options }}
             {{- if $.Values.opencode.provider.awsBedrock.options.region }}
             "region": {{ $.Values.opencode.provider.awsBedrock.options.region | quote }},
             {{- end }}
             {{- if $.Values.opencode.provider.awsBedrock.options.profile }}
             "profile": {{ $.Values.opencode.provider.awsBedrock.options.profile | quote }},
             {{- end }}
-            {{- end }}
           }
         }
         {{- else if eq $provider "vertex" }}
         "vertex": {
           "options": {
-            {{- if $.Values.opencode.provider.vertex.options }}
             {{- if $.Values.opencode.provider.vertex.options.timeout }}
             "timeout": {{ $.Values.opencode.provider.vertex.options.timeout }},
             {{- end }}
             {{- if $.Values.opencode.provider.vertex.options.projectId }}
             "projectId": {{ $.Values.opencode.provider.vertex.options.projectId | quote }},
-            {{- end }}
             {{- end }}
             "apiKey": "{env:GOOGLE_API_KEY}"
           }
@@ -137,13 +140,11 @@ data:
         {{- else if eq $provider "openrouter" }}
         "openrouter": {
           "options": {
-            {{- if $.Values.opencode.provider.openrouter.options }}
             {{- if $.Values.opencode.provider.openrouter.options.timeout }}
             "timeout": {{ $.Values.opencode.provider.openrouter.options.timeout }},
             {{- end }}
             {{- if $.Values.opencode.provider.openrouter.options.baseURL }}
             "baseURL": {{ $.Values.opencode.provider.openrouter.options.baseURL | quote }},
-            {{- end }}
             {{- end }}
             "apiKey": "{env:OPENROUTER_API_KEY}"
           }

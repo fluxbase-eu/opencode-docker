@@ -278,20 +278,21 @@ secrets:
     key: anthropic-api-key
     enabled: true
 
-  # Enable additional providers
-  # openaiApiKey:
-  #   name: opencode-credentials
-  #   key: openai-api-key
-  #   enabled: true
-  # geminiApiKey:
-  #   name: opencode-credentials
-  #   key: gemini-api-key
-  #   enabled: true
-
 # Extra environment variables if needed
 extraEnv: []
 # - name: CUSTOM_VAR
 #   value: "custom-value"
+
+# Extra volumes (for custom configs, secrets, etc.)
+extraVolumes: []
+# - name: custom-config
+#   configMap:
+#     name: my-custom-config
+
+extraVolumeMounts: []
+# - name: custom-config
+#   mountPath: /etc/custom-config
+#   readOnly: true
 
 # Service configuration
 service:
@@ -310,14 +311,166 @@ resources:
 # Ingress (optional)
 ingress:
   enabled: false
+  className: nginx
   hosts:
     - host: opencode.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: opencode-tls
+      hosts:
+        - opencode.example.com
 ```
 
 #### 3. Install the chart:
 
 ```bash
 helm install opencode ./helm/opencode -f custom-values.yaml
+```
+
+### Advanced Configuration
+
+#### Using Gateway API (Kubernetes 1.19+)
+
+The chart supports the Kubernetes Gateway API as an alternative to Ingress:
+
+```yaml
+gatewayAPI:
+  enabled: true
+
+  # Reference to your Gateway
+  gatewaySelector:
+    matchLabels:
+      gateway: external
+
+  httpRoute:
+    hostnames:
+      - opencode.example.com
+
+    rules:
+      - backendRefs:
+          - name: opencode
+            kind: Service
+            port: 4096
+        matches:
+          - path:
+              type: Prefix
+              value: /
+
+    tls:
+      - mode: Terminate
+        certificateRef:
+          name: opencode-cert
+          kind: Secret
+```
+
+Install with:
+```bash
+helm install opencode ./helm/opencode -f custom-values.yaml
+```
+
+### Advanced Configuration
+
+#### Using Gateway API (Kubernetes 1.19+)
+
+The chart supports the Kubernetes Gateway API as an alternative to Ingress:
+
+```yaml
+gatewayAPI:
+  enabled: true
+
+  # Reference to your Gateway
+  gatewaySelector:
+    matchLabels:
+      gateway: external
+
+  httpRoute:
+    hostnames:
+      - opencode.example.com
+
+    rules:
+      - backendRefs:
+          - name: opencode
+            kind: Service
+            port: 4096
+        matches:
+          - path:
+              type: Prefix
+              value: /
+
+    tls:
+      - mode: Terminate
+        certificateRef:
+          name: opencode-cert
+          kind: Secret
+```
+
+#### Adding Extra Volumes
+
+Mount additional ConfigMaps, secrets, or PVCs:
+
+```yaml
+extraVolumes:
+  - name: custom-config
+    configMap:
+      name: my-custom-config
+  - name: tls-secret
+    secret:
+      secretName: my-tls-secret
+
+extraVolumeMounts:
+  - name: custom-config
+    mountPath: /etc/custom-config
+    readOnly: true
+  - name: tls-secret
+    mountPath: /etc/tls
+    readOnly: true
+```
+
+#### Using Global Labels and Annotations
+
+Apply labels and annotations to all resources:
+
+```yaml
+# Global labels applied to all resources
+globalLabels:
+  environment: production
+  team: platform
+
+# Global annotations applied to all resources
+globalAnnotations:
+  prometheus.io/scrape: "true"
+  backup.velero.io/backup-volumes: "true"
+
+# Resource-specific labels (merge with global)
+podLabels:
+  app.kubernetes.io/component: server
+
+deploymentLabels:
+  app.kubernetes.io/part-of: backend
+
+serviceLabels:
+  app.kubernetes.io/service-type: web
+```
+
+#### Extra Environment Variables
+
+Add additional environment variables:
+
+```yaml
+extraEnv:
+  - name: CUSTOM_VAR
+    value: "custom-value"
+  - name: FROM_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: my-secret
+        key: my-key
+```
+  - name: tls-secret
+    mountPath: /etc/tls
+    readOnly: true
 ```
 
 ### Common Operations

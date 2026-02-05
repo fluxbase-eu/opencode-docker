@@ -4,10 +4,19 @@ metadata:
   name: {{ include "opencode.fullname" . }}
   labels:
     {{- include "opencode.labels" . | nindent 4 }}
-  {{- with .Values.service.annotations }}
-  annotations:
+    {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    {{- with .Values.serviceLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .Values.globalAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.serviceAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -17,3 +26,9 @@ spec:
       name: http
   selector:
     {{- include "opencode.selectorLabels" . | nindent 4 }}
+    {{- with .Values.globalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.service.selectors }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}

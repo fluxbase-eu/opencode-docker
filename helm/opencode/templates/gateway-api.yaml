@@ -1,0 +1,45 @@
+{{- if .Values.gatewayAPI.enabled -}}
+{{- if .Values.gatewayAPI.httpRoute.enabled -}}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: {{ include "opencode.fullname" . }}
+  labels:
+    {{- include "opencode.labels" . | nindent 4 }}
+    {{- with .Values.globalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.httpRouteLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .Values.globalAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.httpRouteAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- with .Values.gatewayAPI.gatewaySelector.matchLabels }}
+  parentRefs:
+    {{- range $key, $value := . }}
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ $key }}
+      sectionName: {{ $value }}
+    {{- end }}
+  {{- end }}
+  hostnames: {{ toYaml .Values.gatewayAPI.httpRoute.hostnames | nindent 2 }}
+  rules:
+    {{- range .Values.gatewayAPI.httpRoute.rules }}
+    - backendRefs:
+        {{- toYaml .backendRefs | nindent 8 }}
+      matches:
+        {{- toYaml .matches | nindent 8 }}
+    {{- end }}
+  {{- with .Values.gatewayAPI.httpRoute.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}

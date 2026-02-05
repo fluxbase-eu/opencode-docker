@@ -9,11 +9,54 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Global labels applied to all resources
+globalLabels: {}
+# Example:
+# globalLabels:
+#   environment: production
+#   team: platform
+
+# Global annotations applied to all resources
+globalAnnotations: {}
+# Example:
+# globalAnnotations:
+#   prometheus.io/scrape: "true"
+
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  # Extra labels for ServiceAccount
+  labels: {}
+  name: {}
 
+# Extra labels for Deployment
+deploymentLabels: {}
+deploymentAnnotations: {}
+
+# Extra labels for Service
+serviceLabels: {}
+serviceAnnotations: {}
+
+# Extra labels for Ingress
+ingressLabels: {}
+ingressAnnotations: {}
+
+# Extra labels for PVCs
+pvcLabels: {}
+pvcAnnotations: {}
+
+# Extra labels for ConfigMap
+configMapLabels: {}
+configMapAnnotations: {}
+
+# Extra labels for HTTPRoute (Gateway API)
+httpRouteLabels: {}
+httpRouteAnnotations: {}
+
+# Pod labels (in addition to global labels)
+podLabels: {}
+
+# Pod annotations (in addition to global annotations)
 podAnnotations: {}
 
 podSecurityContext:
@@ -32,20 +75,86 @@ service:
   type: ClusterIP
   port: 4096
   annotations: {}
+  # Additional service labels
+  labels: {}
+  # Additional service selectors
+  selectors: {}
 
+# Ingress configuration (Legacy Ingress API)
 ingress:
   enabled: false
   className: ""
   annotations: {}
+  labels: {}
+  # Default backend for the ingress (optional)
+  # backend:
+  #   service:
+  #     name: ""
+  #     port:
+  #       number: 4096
   hosts:
     - host: opencode.example.com
       paths:
         - path: /
           pathType: Prefix
+          backend:
+            service:
+              name: opencode
+              port:
+                number: 4096
   tls: []
   #  - secretName: opencode-tls
   #    hosts:
   #      - opencode.example.com
+
+# Gateway API configuration (Kubernetes Gateway API v1beta1)
+gatewayAPI:
+  enabled: false
+
+  # Gateway reference (optional - if not specified, uses the default gateway)
+  gatewaySelector:
+    # Gateway labels to attach to
+    matchLabels:
+      # gateway: external-gateway
+
+  # HTTPRoute configuration
+  httpRoute:
+    enabled: true
+    annotations: {}
+    labels: {}
+
+    # Hostnames for the route
+    hostnames:
+      - opencode.example.com
+
+    # Route rules
+    rules:
+      - backendRefs:
+          - name: opencode
+            kind: Service
+            port: 4096
+        matches:
+          - path:
+              type: Prefix
+              value: /
+
+    # TLS configuration
+    tls: []
+    #  - hostname: opencode.example.com
+    #   mode: Terminate
+    #   certificateRef:
+    #     name: opencode-cert
+    #     kind: Secret
+
+    # Request headers (optional)
+    # requestHeaders:
+    #   add:
+    #     - name: X-Custom-Header
+    #       value: "custom-value"
+    #   remove: ["X-Remove-Header"]
+    #   set:
+    #     - name: X-Override-Header
+    #       value: "override-value"
 
 # OpenCode Configuration
 # See: https://opencode.ai/docs/config/
@@ -183,17 +292,32 @@ extraEnv: []
 #         name: my-secret
 #         key: my-key
 
-# Extra environment variables (beyond those from secrets and config)
-extraEnv: []
+# Extra volumes to add to the pod
+extraVolumes: []
 # Example:
-# extraEnv:
-#   - name: CUSTOM_VAR
-#     value: "custom-value"
-#   - name: FROM_SECRET
-#     valueFrom:
-#       secretKeyRef:
-#         name: my-secret
-#         key: my-key
+# extraVolumes:
+#   - name: custom-config
+#     configMap:
+#       name: my-custom-config
+#   - name: custom-secret
+#     secret:
+#       secretName: my-custom-secret
+#   - name: pvc-volume
+#     persistentVolumeClaim:
+#       claimName: my-pvc
+
+# Extra volume mounts to add to the container
+extraVolumeMounts: []
+# Example:
+# extraVolumeMounts:
+#   - name: custom-config
+#     mountPath: /etc/custom-config
+#     readOnly: true
+#   - name: custom-secret
+#     mountPath: /etc/custom-secret
+#     readOnly: true
+#   - name: pvc-volume
+#     mountPath: /data/custom
 
 persistence:
   enabled: true

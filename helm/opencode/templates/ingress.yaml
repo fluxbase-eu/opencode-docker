@@ -5,23 +5,29 @@ metadata:
   name: {{ include "opencode.fullname" . }}
   labels:
     {{- include "opencode.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
-  annotations:
+    {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    {{- with .Values.ingress.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .Values.globalAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if and (not .Values.ingress.className) (not .Values.ingress.annotations) }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
-  {{- if .Values.ingress.tls }}
-  tls:
-    {{- range .Values.ingress.tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
-    {{- end }}
+  {{- if .Values.ingress.backend }}
+  defaultBackend:
+    {{- toYaml .Values.ingress.backend | nindent 4 }}
   {{- end }}
   rules:
     {{- range .Values.ingress.hosts }}
@@ -33,9 +39,23 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
+                {{- if .backend.name }}
+                name: {{ .backend.name }}
+                {{- else }}
                 name: {{ include "opencode.fullname" $ }}
+                {{- end }}
                 port:
+                  {{- if .backend.port.number }}
+                  number: {{ .backend.port.number }}
+                  {{- else if .backend.port.name }}
+                  name: {{ .backend.port.name }}
+                  {{- else }}
                   number: {{ $.Values.service.port }}
+                  {{- end }}
           {{- end }}
     {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
 {{- end }}
