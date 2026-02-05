@@ -8,52 +8,211 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    # Run every day at 9:00 UTC to check for new OpenCode versions
+    - cron: '0 9 * * *'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: fluxbase-eu/opencode-docker
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
+  check-version:
+    name: Check for new OpenCode version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.set_outputs.outputs.new_version }}
+      should_release: ${{ steps.set_outputs.outputs.should_release }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch latest OpenCode version
+        id: fetch_version
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          # Get the latest release from OpenCode's GitHub repo
+          LATEST_VERSION=$(gh release view --repo anthropics/opencode --json tagName --jq '.tagName' | sed 's/^v//')
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get current released version
+        id: current_version
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          # Get the latest release version from this repo
+          CURRENT_VERSION=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName' | sed 's/^v//' || echo "none")
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        id: version_check
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          LATEST="${{ steps.fetch_version.outputs.latest_version }}"
+          CURRENT="${{ steps.current_version.outputs.current_version }}"
+
+          echo "Latest OpenCode version: $LATEST"
+          echo "Current Docker version: $CURRENT"
+
+          if [ "$CURRENT" = "none" ] || [ "$LATEST" != "$CURRENT" ]; then
+            echo "new_version=$LATEST" >> $GITHUB_OUTPUT
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "::notice::New version detected: $LATEST"
+          else
+            echo "new_version=" >> $GITHUB_OUTPUT
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "::notice::Already up to date"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set job outputs
+        id: set_outputs
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "new_version=${{ steps.version_check.outputs.new_version }}" >> $GITHUB_OUTPUT
+            echo "should_release=${{ steps.version_check.outputs.should_release }}" >> $GITHUB_OUTPUT
+          else
+            echo "new_version=" >> $GITHUB_OUTPUT
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
   build:
+    name: Build and push Docker image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@6
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@3
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@3
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Determine OpenCode version
+        id: version
+        run: |
+          if [ "${{ needs.check-version.outputs.should_release }}" = "true" ]; then
+            VERSION="${{ needs.check-version.outputs.new_version }}"
+          else
+            VERSION="latest"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        env:
+          SHOULD_RELEASE: ${{ needs.check-version.outputs.should_release || 'false' }}
+          NEW_VERSION: ${{ needs.check-version.outputs.new_version || '' }}
+
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ steps.version.outputs.version == 'latest' }}
+          labels: |
+            org.opencontainers.image.title=OpenCode Docker
+            org.opencontainers.image.description=Docker image for OpenCode AI coding assistant
+            org.opencontainers.image.vendor=fluxbase-eu
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@6
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            OPENCODE_VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  release:
+    name: Create GitHub Release
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    needs: [check-version, build]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version info
+        id: version
+        run: |
+          VERSION="${{ needs.check-version.outputs.new_version }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          # Extract major.minor for additional tags
+          IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
+          echo "major_minor=${VERSION_PARTS[0]}.${VERSION_PARTS[1]}" >> $GITHUB_OUTPUT
+
+      - name: Fetch OpenCode release notes
+        id: release_notes
+        run: |
+          RELEASE_BODY=$(gh release view v${{ steps.version.outputs.version }} --repo anthropics/opencode --json body --jq '.body')
+          # Add to output (truncate if too long for GitHub Actions)
+          EOF=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64)
+          echo "release_notes<<$EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_BODY" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: OpenCode Docker ${{ steps.version.outputs.version }}
+          body: |
+            ## OpenCode Docker Image ${{ steps.version.outputs.version }}
+
+            This release tracks [OpenCode v${{ steps.version.outputs.version }}](https://github.com/anthropics/opencode/releases/tag/v${{ steps.version.outputs.version }}).
+
+            ### Docker Image
+
+            Pull this version:
+            ```bash
+            docker pull ghcr.io/fluxbase-eu/opencode-docker:${{ steps.version.outputs.version }}
+            ```
+
+            Or use latest:
+            ```bash
+            docker pull ghcr.io/fluxbase-eu/opencode-docker:latest
+            ```
+
+            ### Quick Start
+
+            ```bash
+            docker run -p 4096:4096 ghcr.io/fluxbase-eu/opencode-docker:${{ steps.version.outputs.version }}
+            ```
+
+            ### Available Tags
+
+            - `${{ steps.version.outputs.version }}` - This specific version
+            - `${{ steps.version.outputs.major_minor }}` - Major.Minor version
+            - `latest` - Latest stable release
+
+            ---
+
+            ### OpenCode Release Notes
+
+            ${{ steps.release_notes.outputs.release_notes }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
