@@ -4,10 +4,10 @@ README.md
 renovate.json
 .github
 
-# Exclude user config but keep example
-opencode.json
-!opencode.json.example
+# Exclude user config
+.env
+.env.example
 
-# Exclude Helm release artifacts
+# Helm release artifacts
 *.tgz
 index.yaml

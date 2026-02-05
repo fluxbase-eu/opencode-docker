@@ -76,13 +76,9 @@ OpenCode can be configured using environment variables (see [OpenCode Config Doc
 
 **Recommended: Using a config file with environment variable substitution**
 
-Copy the example config and customize it:
-```bash
-cp opencode.json.example opencode.json
-# Edit opencode.json to customize your configuration
-```
+The repository includes `opencode.json` with environment variable placeholders.
 
-Then run with environment variables:
+Run with environment variables:
 ```bash
 docker run -p 4096:4096 \
   -v $(pwd)/opencode.json:/etc/opencode/opencode.json:ro \
@@ -103,12 +99,6 @@ docker run -p 4096:4096 \
         "apiKey": "{env:ANTHROPIC_API_KEY}",
         "timeout": 300000
       }
-    },
-    "openai": {
-      "options": {
-        "apiKey": "{env:OPENAI_API_KEY}",
-        "timeout": 300000
-      }
     }
   },
   "tools": {
@@ -121,14 +111,9 @@ docker run -p 4096:4096 \
 
 **Using Docker Compose:**
 ```bash
-# Copy example config
-cp opencode.json.example opencode.json
-
-# Create .env file with your credentials
-cat > .env <<EOF
-OPENCODE_MODEL=anthropic/claude-sonnet-4-5
-ANTHROPIC_API_KEY=sk-ant-your-key-here
-EOF
+# Create .env file from example
+cp .env.example .env
+# Edit .env and add your API keys
 
 # Start OpenCode
 docker-compose up -d
@@ -200,30 +185,9 @@ docker-compose down
 
    # API keys (required for your chosen provider)
    ANTHROPIC_API_KEY=sk-ant-your-key-here
-   # OPENAI_API_KEY=sk-your-openai-key
-   # GEMINI_API_KEY=your-gemini-key
    ```
 
-3. Optionally customize `opencode.json` for your needs:
-   ```json
-   {
-     "$schema": "https://opencode.ai/config.json",
-     "model": "{env:OPENCODE_MODEL}",
-     "provider": {
-       "anthropic": {
-         "options": {
-           "apiKey": "{env:ANTHROPIC_API_KEY}",
-           "timeout": 300000
-         }
-       }
-     },
-     "tools": {
-       "bash": true,
-       "write": true,
-       "edit": true
-     }
-   }
-   ```
+3. Optionally customize `opencode.json` for your needs - it uses `{env:VAR_NAME}` placeholders.
 
 ### Custom Port
 

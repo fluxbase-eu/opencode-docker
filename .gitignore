@@ -8,7 +8,6 @@
 *.log
 
 # User configuration (may contain API keys)
-opencode.json
 .env
 
 # Helm release artifacts
