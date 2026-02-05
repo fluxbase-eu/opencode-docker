@@ -8,10 +8,21 @@ Docker image for running [OpenCode](https://opencode.ai) as a web server.
 docker run -p 4096:4096 ghcr.io/fluxbase-eu/opencode-docker:latest
 ```
 
+### With Volume Mount (Recommended)
+
+Mount a local directory to `/workspace` to persist your work:
+
+```bash
+docker run -p 4096:4096 \
+  -v $(pwd)/workspace:/workspace \
+  ghcr.io/fluxbase-eu/opencode-docker:latest
+```
+
 ### With Authentication
 
 ```bash
 docker run -p 4096:4096 \
+  -v $(pwd)/workspace:/workspace \
   -e OPENCODE_SERVER_PASSWORD=your-secret-password \
   ghcr.io/fluxbase-eu/opencode-docker:latest
 ```
@@ -20,6 +31,7 @@ docker run -p 4096:4096 \
 
 ```bash
 docker run -p 8080:8080 \
+  -v $(pwd)/workspace:/workspace \
   -e OPENCODE_PORT=8080 \
   ghcr.io/fluxbase-eu/opencode-docker:latest
 ```
