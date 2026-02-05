@@ -185,7 +185,7 @@ jobs:
         if: steps.check_changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           VERSION="${{ steps.new_version.outputs.new_version }}"
-          CHART_PATH="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}"
+          CHART_PATH="oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}"
           CHART_TAG="$CHART_PATH:$VERSION"
           LATEST_TAG="$CHART_PATH:latest"
 
