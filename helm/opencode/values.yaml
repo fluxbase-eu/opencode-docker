@@ -25,39 +25,18 @@ globalAnnotations: {}
 serviceAccount:
   create: true
   annotations: {}
-  # Extra labels for ServiceAccount
   labels: {}
   name: {}
 
-# Extra labels for Deployment
-deploymentLabels: {}
-deploymentAnnotations: {}
+# Deployment labels and annotations (in addition to global labels/annotations)
+deployment:
+  labels: {}
+  annotations: {}
 
-# Extra labels for Service
-serviceLabels: {}
-serviceAnnotations: {}
-
-# Extra labels for Ingress
-ingressLabels: {}
-ingressAnnotations: {}
-
-# Extra labels for PVCs
-pvcLabels: {}
-pvcAnnotations: {}
-
-# Extra labels for ConfigMap
-configMapLabels: {}
-configMapAnnotations: {}
-
-# Extra labels for HTTPRoute (Gateway API)
-httpRouteLabels: {}
-httpRouteAnnotations: {}
-
-# Pod labels (in addition to global labels)
-podLabels: {}
-
-# Pod annotations (in addition to global annotations)
-podAnnotations: {}
+# Pod labels and annotations (in addition to global labels/annotations)
+pod:
+  labels: {}
+  annotations: {}
 
 podSecurityContext:
   fsGroup: 1000
@@ -74,9 +53,9 @@ securityContext:
 service:
   type: ClusterIP
   port: 4096
-  annotations: {}
-  # Additional service labels
+  # Service labels and annotations (in addition to global labels/annotations)
   labels: {}
+  annotations: {}
   # Additional service selectors
   selectors: {}
 
@@ -84,8 +63,9 @@ service:
 ingress:
   enabled: false
   className: ""
-  annotations: {}
+  # Ingress labels and annotations (in addition to global labels/annotations)
   labels: {}
+  annotations: {}
   # Default backend for the ingress (optional)
   # backend:
   #   service:
@@ -120,8 +100,9 @@ gatewayAPI:
   # HTTPRoute configuration
   httpRoute:
     enabled: true
-    annotations: {}
+    # HTTPRoute labels and annotations (in addition to global labels/annotations)
     labels: {}
+    annotations: {}
 
     # Hostnames for the route
     hostnames:
@@ -280,6 +261,11 @@ secrets:
   #   key: openrouter-api-key
   #   enabled: false
 
+# ConfigMap labels and annotations (in addition to global labels/annotations)
+configMap:
+  labels: {}
+  annotations: {}
+
 # Extra environment variables (beyond those from secrets and config)
 extraEnv: []
 # Example:
@@ -327,16 +313,22 @@ persistence:
   accessMode: ReadWriteOnce
   # Size for each PVC
   size: 1Gi
+  # PVC labels and annotations (in addition to global labels/annotations)
+  labels: {}
+  annotations: {}
 
   # Individual PVC configurations
   config:
     enabled: true
+    existingClaim: ""  # Use existing PVC (if set, will not create a new one)
     size: null  # Uses persistence.size if null
   data:
     enabled: true
+    existingClaim: ""  # Use existing PVC (if set, will not create a new one)
     size: null  # Uses persistence.size if null
   workspace:
     enabled: true
+    existingClaim: ""  # Use existing PVC (if set, will not create a new one)
     size: null  # Uses persistence.size if null
 
 resources:

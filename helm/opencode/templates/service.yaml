@@ -7,14 +7,14 @@ metadata:
     {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.serviceLabels }}
+    {{- with .Values.service.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   annotations:
     {{- with .Values.globalAnnotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.serviceAnnotations }}
+    {{- with .Values.service.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:

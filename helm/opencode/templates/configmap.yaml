@@ -7,14 +7,14 @@ metadata:
     {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.configMapLabels }}
+    {{- with .Values.configMap.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   annotations:
     {{- with .Values.globalAnnotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.configMapAnnotations }}
+    {{- with .Values.configMap.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:

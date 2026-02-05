@@ -1,5 +1,5 @@
 {{- if .Values.persistence.enabled }}
-{{- if .Values.persistence.config.enabled }}
+{{- if and .Values.persistence.config.enabled (not .Values.persistence.config.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -9,10 +9,10 @@ metadata:
     {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.pvcLabels }}
+    {{- with .Values.persistence.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with or .Values.globalAnnotations .Values.pvcAnnotations }}
+  {{- with or .Values.globalAnnotations .Values.persistence.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -25,7 +25,7 @@ spec:
       storage: {{ .Values.persistence.config.size | default .Values.persistence.size }}
 {{- end }}
 
-{{- if .Values.persistence.data.enabled }}
+{{- if and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -35,10 +35,10 @@ metadata:
     {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.pvcLabels }}
+    {{- with .Values.persistence.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with or .Values.globalAnnotations .Values.pvcAnnotations }}
+  {{- with or .Values.globalAnnotations .Values.persistence.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -51,7 +51,7 @@ spec:
       storage: {{ .Values.persistence.data.size | default .Values.persistence.size }}
 {{- end }}
 
-{{- if .Values.persistence.workspace.enabled }}
+{{- if and .Values.persistence.workspace.enabled (not .Values.persistence.workspace.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -61,10 +61,10 @@ metadata:
     {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.pvcLabels }}
+    {{- with .Values.persistence.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with or .Values.globalAnnotations .Values.pvcAnnotations }}
+  {{- with or .Values.globalAnnotations .Values.persistence.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}

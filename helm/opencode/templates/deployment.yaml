@@ -7,10 +7,10 @@ metadata:
     {{- with .Values.globalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.deploymentLabels }}
+    {{- with .Values.deployment.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with or .Values.globalAnnotations .Values.deploymentAnnotations }}
+  {{- with or .Values.globalAnnotations .Values.deployment.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -28,14 +28,14 @@ spec:
         {{- with .Values.globalLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.podLabels }}
+        {{- with .Values.pod.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
         {{- with .Values.globalAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.podAnnotations }}
+        {{- with .Values.pod.annotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
@@ -179,17 +179,17 @@ spec:
         {{- if .Values.persistence.config.enabled }}
         - name: config
           persistentVolumeClaim:
-            claimName: {{ include "opencode.fullname" . }}-config
+            claimName: {{ .Values.persistence.config.existingClaim | default (print (include "opencode.fullname" .) "-config") }}
         {{- end }}
         {{- if .Values.persistence.data.enabled }}
         - name: data
           persistentVolumeClaim:
-            claimName: {{ include "opencode.fullname" . }}-data
+            claimName: {{ .Values.persistence.data.existingClaim | default (print (include "opencode.fullname" .) "-data") }}
         {{- end }}
         {{- if .Values.persistence.workspace.enabled }}
         - name: workspace
           persistentVolumeClaim:
-            claimName: {{ include "opencode.fullname" . }}-workspace
+            claimName: {{ .Values.persistence.workspace.existingClaim | default (print (include "opencode.fullname" .) "-workspace") }}
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
