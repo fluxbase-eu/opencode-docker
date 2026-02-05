@@ -117,12 +117,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.version != 'latest' }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.version != 'latest' }}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable=${{ steps.version.outputs.version == 'latest' }}
+            type=raw,value=latest
           labels: |
             org.opencontainers.image.title=OpenCode Docker
             org.opencontainers.image.description=Docker image for OpenCode AI coding assistant
