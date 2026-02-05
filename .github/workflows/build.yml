@@ -34,8 +34,8 @@ jobs:
       - name: Get current released version
         id: current_version
         run: |
-          # Get the latest release version from this repo
-          CURRENT_VERSION=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName' | sed 's/^v//' || echo "none")
+          # Get the latest Docker release version (exclude helm- releases)
+          CURRENT_VERSION=$(gh release list --repo ${{ github.repository }} --limit 20 --json tagName --jq '.[].tagName' | grep -v '^helm-' | head -1 | sed 's/^v//' || echo "none")
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $CURRENT_VERSION"
         env:
@@ -47,7 +47,7 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: |
           # Get the latest release from OpenCode's GitHub repo
-          LATEST_VERSION=$(gh release view --repo anthropics/opencode --json tagName --jq '.tagName' | sed 's/^v//')
+          LATEST_VERSION=$(gh release view --repo anomalyco/opencode --json tagName --jq '.tagName' | sed 's/^v//')
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
           echo "Latest version: $LATEST_VERSION"
         env:
@@ -172,7 +172,7 @@ jobs:
       - name: Fetch OpenCode release notes
         id: release_notes
         run: |
-          RELEASE_BODY=$(gh release view v${{ steps.version.outputs.version }} --repo anthropics/opencode --json body --jq '.body')
+          RELEASE_BODY=$(gh release view v${{ steps.version.outputs.version }} --repo anomalyco/opencode --json body --jq '.body')
           # Add to output (truncate if too long for GitHub Actions)
           EOF=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64)
           echo "release_notes<<$EOF" >> $GITHUB_OUTPUT
@@ -189,7 +189,7 @@ jobs:
           body: |
             ## OpenCode Docker Image ${{ steps.version.outputs.version }}
 
-            This release tracks [OpenCode v${{ steps.version.outputs.version }}](https://github.com/anthropics/opencode/releases/tag/v${{ steps.version.outputs.version }}).
+            This release tracks [OpenCode v${{ steps.version.outputs.version }}](https://github.com/anomalyco/opencode/releases/tag/v${{ steps.version.outputs.version }}).
 
             ### Docker Image
 
