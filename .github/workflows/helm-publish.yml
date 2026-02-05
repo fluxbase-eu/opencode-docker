@@ -24,7 +24,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  CHART_NAME: opencode
 
 jobs:
   publish-helm-chart:
@@ -52,7 +51,7 @@ jobs:
         id: check_changes
         run: |
           # Check if chart exists in GHCR
-          CHART_EXISTS=$(helm search repo ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }} --versions | grep -c ${{ steps.current_version.outputs.current_version }} || echo "0")
+          CHART_EXISTS=$(helm search repo ${{ env.REGISTRY }}/${{ github.repository_owner }}/opencode --versions | grep -c ${{ steps.current_version.outputs.current_version }} || echo "0")
 
           if [ "$CHART_EXISTS" -eq 0 ]; then
             echo "First release or new version, will publish"
@@ -185,13 +184,13 @@ jobs:
         if: steps.check_changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           VERSION="${{ steps.new_version.outputs.new_version }}"
-          CHART_PATH="oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}"
+          CHART_PATH="oci://${{ env.REGISTRY }}/${{ github.repository_owner }}"
 
           # Package and push the chart
           cd helm/opencode
           helm package .
 
-          # Push to GHCR (Helm automatically uses version from Chart.yaml)
+          # Push to GHCR (Helm automatically appends chart name from Chart.yaml)
           helm push opencode-*.tgz "$CHART_PATH"
 
-          echo "Published Helm chart $VERSION to $CHART_PATH"
+          echo "Published Helm chart $VERSION to $CHART_PATH/opencode"
