@@ -1,159 +1,33 @@
 # OpenCode Docker
 
-Docker image for running [OpenCode](https://opencode.ai) as a web server.
+> **Docker image and deployment setup for [OpenCode](https://opencode.ai)**
 
-## Features
+This project provides container deployment options for running [OpenCode](https://opencode.ai) as a web service. OpenCode is an AI-powered development environment - this repository makes it easy to run in containerized environments.
 
-- **Rootless container**: Runs as non-root user (UID 1000) for enhanced security
-- **Pre-installed tools**: Includes common development tools:
-  - **Essentials**: git, curl, bash, ca-certificates
-  - **Editors**: vim, nano
-  - **Utilities**: jq, yq, findutils
-  - **Language runtimes**: Python 3 + pip, Node.js + npm, Go
-- **Persistent data**: Volume mounts for configuration, sessions, and workspace
+## What is OpenCode?
 
-## Usage
+OpenCode is an AI coding assistant that provides a terminal-based interface for software development. It supports multiple AI providers (Anthropic, OpenAI, Google, AWS, etc.) and includes tools for file editing, bash commands, and project management.
 
-```bash
-docker run -p 4000:4000 ghcr.io/fluxbase-eu/opencode-docker:latest
-```
+**For detailed information about OpenCode features and configuration, visit [opencode.ai](https://opencode.ai)**
 
-### With Volume Mount (Recommended)
+## Deployment Options
 
-Mount a local directory to `/workspace` to persist your work:
+This repository provides:
+- **Docker image** - Ready-to-use container with OpenCode and common development tools
+- **Docker Compose** - Simple local deployment with persistent volumes
+- **Helm chart** - Kubernetes deployment with full lifecycle management
 
-```bash
-docker run -p 4000:4000 \
-  -v $(pwd)/workspace:/workspace \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
-```
+## Quick Start
 
-### With Authentication
+### Docker
 
 ```bash
 docker run -p 4000:4000 \
-  -v $(pwd)/workspace:/workspace \
-  -e OPENCODE_SERVER_PASSWORD=your-secret-password \
+  -v opencode-workspace:/home/opencode/workspace \
   ghcr.io/fluxbase-eu/opencode-docker:latest
 ```
 
-### Custom Port
-
-```bash
-docker run -p 8080:8080 \
-  -v $(pwd)/workspace:/workspace \
-  -e OPENCODE_PORT=8080 \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
-```
-
-## Environment Variables
-
-### Server Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENCODE_HOSTNAME` | Host to bind to | `0.0.0.0` |
-| `OPENCODE_PORT` | Port to listen on | `4000` |
-| `OPENCODE_SERVER_PASSWORD` | Optional password for authentication | (none) |
-| `OPENCODE_SERVER_USERNAME` | Username for authentication | `opencode` |
-
-### OpenCode Configuration
-
-OpenCode can be configured using environment variables (see [OpenCode Config Docs](https://opencode.ai/docs/config/)):
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `OPENCODE_CONFIG` | Path to custom config file | `/path/to/config.json` |
-| `OPENCODE_CONFIG_CONTENT` | Inline JSON configuration | `{"model":"anthropic/claude-sonnet-4-5"}` |
-| `OPENCODE_CONFIG_DIR` | Custom config directory for agents/commands | `/path/to/config-dir` |
-| `OPENCODE_MODEL` | Default model to use | `anthropic/claude-sonnet-4-5` |
-| `OPENCODE_SMALL_MODEL` | Model for lightweight tasks | `anthropic/claude-haiku-4-5` |
-| `ANTHROPIC_API_KEY` | Anthropic API key | `sk-ant-...` |
-| `OPENCODE_AUTOUPDATE` | Enable auto-updates | `true` |
-| `OPENCODE_SHARE` | Sharing behavior | `manual` |
-
-#### Configuration Examples
-
-**Recommended: Using a config file with environment variable substitution**
-
-The repository includes `opencode.json` with environment variable placeholders.
-
-Run with environment variables:
-```bash
-docker run -p 4000:4000 \
-  -v $(pwd)/opencode.json:/etc/opencode/opencode.json:ro \
-  -e OPENCODE_MODEL=anthropic/claude-sonnet-4-5 \
-  -e ANTHROPIC_API_KEY=sk-ant-your-key-here \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
-```
-
-**The config file uses `{env:VAR_NAME}` syntax to reference environment variables:**
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "model": "{env:OPENCODE_MODEL}",
-  "small_model": "{env:OPENCODE_SMALL_MODEL}",
-  "provider": {
-    "anthropic": {
-      "options": {
-        "apiKey": "{env:ANTHROPIC_API_KEY}",
-        "timeout": 300000
-      }
-    }
-  },
-  "tools": {
-    "bash": true,
-    "write": true,
-    "edit": true
-  }
-}
-```
-
-**Using Docker Compose:**
-```bash
-# Create .env file from example
-cp .env.example .env
-# Edit .env and add your API keys
-
-# Start OpenCode
-docker-compose up -d
-```
-
-For more configuration options, see the [OpenCode documentation](https://opencode.ai/docs/config/).
-
-## Persistent Data
-
-OpenCode stores data in three locations that should be persisted for a better user experience:
-
-| Path | Purpose |
-|------|---------|
-| `/home/opencode/.config/opencode` | Global configuration and user preferences |
-| `/home/opencode/.local/share/opencode` | Session storage, cache, and authentication credentials |
-| `/workspace` | Working directory for projects |
-
-### Volume Mount Examples
-
-#### Minimal (workspace only)
-```bash
-docker run -p 4000:4000 \
-  -v $(pwd)/workspace:/workspace \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
-```
-
-#### Full persistence (recommended)
-```bash
-docker run -p 4000:4000 \
-  -v opencode-config:/home/opencode/.config/opencode \
-  -v opencode-data:/home/opencode/.local/share/opencode \
-  -v opencode-workspace:/workspace \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
-```
-
-## Docker Compose
-
-Docker Compose is recommended for easy deployment with all persistent volumes properly configured.
-
-### Basic Usage
+### Docker Compose (Recommended)
 
 ```bash
 # Clone the repository
@@ -163,159 +37,70 @@ cd opencode-docker
 # Start OpenCode
 docker-compose up -d
 
-# View logs
-docker-compose logs -f
-
-# Stop OpenCode
-docker-compose down
+# Access at http://localhost:4000
 ```
 
-### Configuration
-
-1. Copy the example config file:
-   ```bash
-   cp opencode.json.example opencode.json
-   ```
-
-2. Create a `.env` file with your credentials:
-   ```env
-   # Model configuration
-   OPENCODE_MODEL=anthropic/claude-sonnet-4-5
-   OPENCODE_SMALL_MODEL=anthropic/claude-haiku-4-5
-
-   # API keys (required for your chosen provider)
-   ANTHROPIC_API_KEY=sk-ant-your-key-here
-   ```
-
-3. Optionally customize `opencode.json` for your needs - it uses `{env:VAR_NAME}` placeholders.
-
-### Custom Port
+### Kubernetes / Helm
 
 ```bash
-OPENCODE_PORT=8080 docker-compose up -d
-```
-
-## Kubernetes / Helm
-
-A Helm chart is provided for Kubernetes deployments and published to GitHub Container Registry (GHCR).
-
-### Installation
-
-```bash
-# Install from GHCR (recommended)
+# Install from GHCR
 helm install opencode oci://ghcr.io/fluxbase-eu/opencode
 
-# Install specific version from GHCR
-helm install opencode oci://ghcr.io/fluxbase-eu/opencode --version 0.1.0
-
-# Install from local directory
+# Or install from local directory
 helm install opencode ./helm/opencode
-
-# With custom values
-helm install opencode oci://ghcr.io/fluxbase-eu/opencode -f custom-values.yaml
 ```
 
-### Available Versions
+---
 
-To list available versions:
+## Configuration
+
+**Important:** OpenCode is configured through the web UI after first launch. Your configuration is automatically persisted to the config volume.
+
+### First-Time Setup
+
+1. Start the container
+2. Open `http://localhost:4000` in your browser
+3. Configure your AI provider and API keys through the UI
+4. Your settings are saved and persist across container restarts
+
+### Environment Variables
+
+Only a few container-level environment variables are available:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OPENCODE_PORT` | Port to listen on | `4000` |
+| `OPENCODE_SERVER_PASSWORD` | Optional password for authentication | (none) |
+
+**Note:** API keys and model configuration are configured through the OpenCode UI, not environment variables.
+
+### Docker Compose
+
+Create a `.env` file in the repository root:
 
 ```bash
-helm search repo ghcr.io/fluxbase-eu/opencode --versions
+# Optional server password
+# OPENCODE_SERVER_PASSWORD=your-secure-password
+
+# Custom port (default: 4000)
+# OPENCODE_PORT=4000
 ```
 
-**Note**: The Helm chart uses semantic versioning and is automatically published to GHCR when changes are made to the `helm/opencode/` directory.
-
-### Configuration
-
-The Helm chart creates a ConfigMap with OpenCode configuration and uses Kubernetes secrets for API keys.
-
-#### 1. Create secrets for your API keys:
+Then start with:
 
 ```bash
-# Create secret for Anthropic API key
-kubectl create secret generic opencode-credentials \
-  --from-literal=anthropic-api-key=sk-ant-your-key-here
-
-# Optional: Add keys for other providers
-kubectl create secret generic opencode-credentials \
-  --from-literal=anthropic-api-key=sk-ant-your-key-here \
-  --from-literal=openai-api-key=sk-your-openai-key \
-  --from-literal=gemini-api-key=your-gemini-key \
-  --from-literal=google-api-key=your-google-key \
-  --from-literal=openrouter-api-key=your-openrouter-key \
-  --from-literal=zai-api-key=your-zai-key \
-  --dry-run=client -o yaml | kubectl apply -f -
+docker-compose up -d
 ```
 
-#### 2. Configure via `values.yaml` or custom values file:
+### Kubernetes / Helm
+
+The Helm chart creates persistent volumes for configuration and data. Configure via `values.yaml`:
 
 ```yaml
-# OpenCode configuration
-opencode:
-  model: "anthropic/claude-sonnet-4-5"
-  smallModel: "anthropic/claude-haiku-4-5"
-  autoupdate: true
-  share: "manual"
-
-  # Provider configuration
-  provider:
-    anthropic:
-      options:
-        timeout: 300000
-
-    # Enable additional providers as needed
-    # openai:
-    #   options:
-    #     timeout: 300000
-    # gemini:
-    #   options:
-    #     timeout: 300000
-    # awsBedrock:
-    #   options:
-    #     region: "us-east-1"
-
-  # Tools configuration
-  tools:
-    bash: true
-    write: true
-    edit: true
-
-# Secret references (API keys)
-secrets:
-  anthropicApiKey:
-    name: opencode-credentials
-    key: anthropic-api-key
-    enabled: true
-
-# Extra environment variables if needed
-extraEnv: []
-# - name: CUSTOM_VAR
-#   value: "custom-value"
-
-# Extra volumes (for custom configs, secrets, etc.)
-extraVolumes: []
-# - name: custom-config
-#   configMap:
-#     name: my-custom-config
-
-extraVolumeMounts: []
-# - name: custom-config
-#   mountPath: /etc/custom-config
-#   readOnly: true
-
 # Service configuration
 service:
   type: ClusterIP
   port: 4000
-
-# Resources
-resources:
-  limits:
-    cpu: 2
-    memory: 4Gi
-  requests:
-    cpu: 500m
-    memory: 1Gi
 
 # Ingress (optional)
 ingress:
@@ -326,29 +111,100 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-  tls:
-    - secretName: opencode-tls
-      hosts:
-        - opencode.example.com
+
+# Resources
+resources:
+  limits:
+    cpu: 2
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Extra environment variables (rarely needed)
+extraEnv: []
+# - name: CUSTOM_VAR
+#   value: "custom-value"
+
+# Extra volumes if needed
+extraVolumes: []
+extraVolumeMounts: []
 ```
 
-#### 3. Install the chart:
+Install with custom values:
 
 ```bash
 helm install opencode ./helm/opencode -f custom-values.yaml
 ```
 
-### Advanced Configuration
+---
 
-#### Using Gateway API (Kubernetes 1.19+)
+## Persistent Data
 
-The chart supports the Kubernetes Gateway API as an alternative to Ingress:
+OpenCode stores data in three locations that should be persisted:
+
+| Path | Purpose |
+|------|---------|
+| `/home/opencode/.config/opencode` | Global configuration, user preferences, and UI settings |
+| `/home/opencode/.local/share/opencode` | Session storage, cache, and authentication credentials |
+| `/home/opencode/workspace` | Working directory for projects |
+
+### Volume Mount Examples
+
+#### Minimal (workspace only)
+
+```bash
+docker run -p 4000:4000 \
+  -v $(pwd)/workspace:/home/opencode/workspace \
+  ghcr.io/fluxbase-eu/opencode-docker:latest
+```
+
+#### Full persistence (recommended)
+
+```bash
+docker run -p 4000:4000 \
+  -v opencode-config:/home/opencode/.config/opencode \
+  -v opencode-data:/home/opencode/.local/share/opencode \
+  -v opencode-workspace:/home/opencode/workspace \
+  ghcr.io/fluxbase-eu/opencode-docker:latest
+```
+
+---
+
+## Container Features
+
+- **Rootless container**: Runs as non-root user (UID 1000) for enhanced security
+- **Pre-installed tools**: Common development tools included
+  - **Essentials**: git, curl, bash, ca-certificates
+  - **Editors**: vim, nano
+  - **Utilities**: jq, yq, findutils
+  - **Language runtimes**: Python 3 + pip, Node.js + npm, Go
+- **Automatic permission fixing**: Entrypoint script ensures volumes have correct ownership
+
+---
+
+## Security
+
+The container follows security best practices:
+
+- **User**: `opencode` (UID 1000, non-root)
+- **Group**: `opencode` (GID 1000)
+- **Home directory**: `/home/opencode`
+- **Workspace**: `/home/opencode/workspace`
+- **Helm enforcement**: `runAsNonRoot: true`, all capabilities dropped
+
+---
+
+## Advanced Helm Configuration
+
+### Gateway API Support
+
+The chart supports Kubernetes Gateway API as an alternative to Ingress:
 
 ```yaml
 gatewayAPI:
   enabled: true
 
-  # Reference to your Gateway
   gatewaySelector:
     matchLabels:
       gateway: external
@@ -366,80 +222,11 @@ gatewayAPI:
           - path:
               type: Prefix
               value: /
-
-    tls:
-      - mode: Terminate
-        certificateRef:
-          name: opencode-cert
-          kind: Secret
 ```
 
-Install with:
-```bash
-helm install opencode ./helm/opencode -f custom-values.yaml
-```
+### Global Labels and Annotations
 
-### Advanced Configuration
-
-#### Using Gateway API (Kubernetes 1.19+)
-
-The chart supports the Kubernetes Gateway API as an alternative to Ingress:
-
-```yaml
-gatewayAPI:
-  enabled: true
-
-  # Reference to your Gateway
-  gatewaySelector:
-    matchLabels:
-      gateway: external
-
-  httpRoute:
-    hostnames:
-      - opencode.example.com
-
-    rules:
-      - backendRefs:
-          - name: opencode
-            kind: Service
-            port: 4000
-        matches:
-          - path:
-              type: Prefix
-              value: /
-
-    tls:
-      - mode: Terminate
-        certificateRef:
-          name: opencode-cert
-          kind: Secret
-```
-
-#### Adding Extra Volumes
-
-Mount additional ConfigMaps, secrets, or PVCs:
-
-```yaml
-extraVolumes:
-  - name: custom-config
-    configMap:
-      name: my-custom-config
-  - name: tls-secret
-    secret:
-      secretName: my-tls-secret
-
-extraVolumeMounts:
-  - name: custom-config
-    mountPath: /etc/custom-config
-    readOnly: true
-  - name: tls-secret
-    mountPath: /etc/tls
-    readOnly: true
-```
-
-#### Using Global Labels and Annotations
-
-Apply labels and annotations to all resources:
+Apply metadata to all resources:
 
 ```yaml
 # Global labels applied to all resources
@@ -450,36 +237,58 @@ globalLabels:
 # Global annotations applied to all resources
 globalAnnotations:
   prometheus.io/scrape: "true"
-  backup.velero.io/backup-volumes: "true"
-
-# Resource-specific labels (merge with global)
-podLabels:
-  app.kubernetes.io/component: server
-
-deploymentLabels:
-  app.kubernetes.io/part-of: backend
-
-serviceLabels:
-  app.kubernetes.io/service-type: web
 ```
 
-#### Extra Environment Variables
+### Persistent Volume Claims
 
-Add additional environment variables:
+The Helm chart creates three PVCs (1Gi each by default):
+
+- `<release-name>-config` - Configuration and preferences
+- `<release-name>-data` - Sessions and cache
+- `<release-name>-workspace` - Project workspace
+
+Customize in `values.yaml`:
 
 ```yaml
-extraEnv:
-  - name: CUSTOM_VAR
-    value: "custom-value"
-  - name: FROM_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: my-secret
-        key: my-key
+persistence:
+  enabled: true
+  storageClass: ""  # Uses cluster default
+  size: 1Gi
+
+  config:
+    enabled: true
+    existingClaim: ""  # Use existing PVC if provided
 ```
-  - name: tls-secret
-    mountPath: /etc/tls
-    readOnly: true
+
+### Health Probes
+
+Configure liveness, readiness, and startup probes:
+
+```yaml
+probes:
+  liveness:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+  readiness:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+  startup:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 5
+    failureThreshold: 30
 ```
 
 ### Common Operations
@@ -493,44 +302,64 @@ helm uninstall opencode
 
 # Port forward to access locally
 kubectl port-forward svc/opencode 4000:4000
+
+# List available Helm chart versions
+helm search repo ghcr.io/fluxbase-eu/opencode --versions
 ```
 
-### Persistent Volume Claims
-
-The Helm chart creates three PVCs:
-
-- `opencode-config` - Configuration and preferences (1Gi)
-- `opencode-data` - Sessions and cache (1Gi)
-- `opencode-workspace` - Project workspace (1Gi)
-
-These can be customized in `values.yaml`.
-
-## Security
-
-The container runs as a non-root user for enhanced security:
-
-- **User**: `opencode` (UID 1000)
-- **Group**: `opencode` (GID 1000)
-- **Home directory**: `/home/opencode`
-- **Security context**: The Helm chart enforces `runAsNonRoot: true` and drops all capabilities
-
-This follows container security best practices and limits the potential impact of a container compromise.
+---
 
 ## Backup Considerations
 
-For production deployments, consider implementing a backup strategy for your persistent data:
+For production deployments, implement a backup strategy for persistent data:
 
-- **Docker volumes**: Use `docker volume` commands or a backup solution
-- **Kubernetes PVCs**: Use Velero, your cloud provider's backup solution, or regular snapshots
+- **Docker volumes**: Use `docker volume` commands or backup solutions
+- **Kubernetes PVCs**: Use Velero, cloud provider backups, or regular snapshots
 - **Important data**:
-  - `/home/opencode/.local/share/opencode` - Contains active sessions and credentials
-  - `/home/opencode/.config/opencode` - Contains user preferences and settings
-  - `/workspace` - Contains your project files
+  - `/home/opencode/.local/share/opencode` - Active sessions and credentials
+  - `/home/opencode/.config/opencode` - User preferences and provider settings
+  - `/home/opencode/workspace` - Project files
+
+---
 
 ## Development
 
-The CI pipeline includes two automated workflows:
+### Automated Workflows
 
-1. **Build and Push** (`.github/workflows/build.yml`): Builds and pushes Docker images to GitHub Container Registry on pushes to `main`. Also checks for new OpenCode versions daily and creates releases automatically.
+1. **Build and Push** (`.github/workflows/build.yml`):
+   - Builds and pushes Docker images to GHCR on pushes to `main`
+   - Checks for new OpenCode versions daily
+   - Creates releases automatically
 
-2. **Helm Chart Publish** (`.github/workflows/helm-publish.yml`): Automatically publishes Helm chart updates when changes are detected in the `helm/opencode/` directory. Uses semantic versioning with auto-detection of version bump type (patch/minor/major) based on commit messages.
+2. **Helm Chart Publish** (`.github/workflows/helm-publish.yml`):
+   - Publishes Helm chart to GHCR when changes are detected in `helm/opencode/`
+   - Uses semantic versioning with auto-detection based on commit messages
+
+### Building Locally
+
+```bash
+# Build Docker image
+docker build -t opencode-local .
+
+# Build and test with Docker Compose
+docker-compose up --build
+
+# Package Helm chart
+helm package helm/opencode
+```
+
+---
+
+## Links
+
+- **OpenCode**: https://opencode.ai
+- **OpenCode Documentation**: https://opencode.ai/docs/config/
+- **Docker Image**: ghcr.io/fluxbase-eu/opencode-docker
+- **Helm Chart**: ghcr.io/fluxbase-eu/opencode
+- **Issue Tracker**: https://github.com/fluxbase-eu/opencode-docker/issues
+
+---
+
+## License
+
+This deployment configuration is provided as-is for running OpenCode. Please refer to the [OpenCode project](https://opencode.ai) for information about the OpenCode software license.
