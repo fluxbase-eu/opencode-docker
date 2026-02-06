@@ -4,6 +4,9 @@ apiVersion: gateway.networking.k8s.io/v1beta1
 kind: HTTPRoute
 metadata:
   name: {{ include "opencode.fullname" . }}
+  {{- if .Values.gatewayAPI.namespace }}
+  namespace: {{ .Values.gatewayAPI.namespace }}
+  {{- end }}
   labels:
     {{- include "opencode.labels" . | nindent 4 }}
     {{- with .Values.globalLabels }}

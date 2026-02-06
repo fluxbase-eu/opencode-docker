@@ -3,7 +3,7 @@
 image:
   repository: ghcr.io/fluxbase-eu/opencode-docker
   pullPolicy: IfNotPresent
-  tag: "1.1.53"
+  tag: "latest"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -91,6 +91,9 @@ ingress:
 gatewayAPI:
   enabled: false
 
+  # Namespace for the HTTPRoute (defaults to release namespace)
+  namespace: ""
+
   # Gateway reference (optional - deprecated, use httpRoute.parentRefs instead)
   gatewaySelector:
     # Gateway labels to attach to
@@ -111,8 +114,11 @@ gatewayAPI:
     # parentRefs:
     #   - name: external-gateway
     #     namespace: infrastructure
-    #   - name: my-gateway
+    #     group: gateway.networking.k8s.io
+    #     kind: Gateway
     #     sectionName: http
+    #   - name: my-gateway
+    #     # namespace defaults to route namespace if not specified
 
     # Hostnames for the route
     hostnames:
