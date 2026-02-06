@@ -42,6 +42,10 @@ spec:
         {{- toYaml .backendRefs | nindent 8 }}
       matches:
         {{- toYaml .matches | nindent 8 }}
+      {{- if .filters }}
+      filters:
+        {{- toYaml .filters | nindent 8 }}
+      {{- end }}
     {{- end }}
   {{- with .Values.gatewayAPI.httpRoute.tls }}
   tls:

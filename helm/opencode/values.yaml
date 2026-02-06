@@ -134,6 +134,29 @@ gatewayAPI:
           - path:
               type: Prefix
               value: /
+        # Optional filters for request/response modification
+        # filters:
+        #   - type: RequestHeaderModifier
+        #     requestHeaderModifier:
+        #       set:
+        #         - name: X-Forwarded-Proto
+        #           value: https
+        #         - name: Content-Security-Policy
+        #           value: "default-src 'self'"
+        #       add:
+        #         - name: X-Request-ID
+        #           value: "1234"
+        #       remove:
+        #         - name: X-Internal-Secret
+        #   - type: URLRewrite
+        #     urlRewrite:
+        #       path:
+        #         type: ReplacePrefixMatch
+        #         replacePrefixMatch: /api
+        #   - type: RequestRedirect
+        #     requestRedirect:
+        #       scheme: https
+        #       statusCode: 301
 
     # TLS configuration
     tls: []
