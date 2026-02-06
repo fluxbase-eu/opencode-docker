@@ -1,7 +1,7 @@
-FROM alpine:latest
+FROM debian:bookworm-slim
 
 # Install essential tools, language runtimes, and utilities
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     # Essentials
     curl \
     ca-certificates \
@@ -12,34 +12,60 @@ RUN apk add --no-cache \
     nano \
     # Utilities
     jq \
-    yq \
     findutils \
+    # Go
+    golang-go \
     # Python
     python3 \
-    py3-pip \
-    # Node.js & npm
+    python3-pip \
+    # Node.js & npm (from Debian repos for better compatibility)
     nodejs \
     npm \
-    # Go
-    go
+    # Clean up
+    && rm -rf /var/lib/apt/lists/*
+
+# Install yq (prebuilt binary with multi-arch support)
+RUN YQ_VERSION=v4.40.5 && \
+    ARCH=$(uname -m) && \
+    case $ARCH in \
+        x86_64) YQ_ARCH="amd64" ;; \
+        aarch64) YQ_ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    curl -L -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${YQ_ARCH}" && \
+    chmod +x /usr/local/bin/yq
 
 # Create non-root user
-RUN addgroup -g 1000 opencode && \
-    adduser -D -u 1000 -G opencode opencode
+RUN groupadd -g 1000 opencode && \
+    useradd -u 1000 -g opencode -m -s /bin/bash opencode
 
 # Build argument for OpenCode version
 ARG OPENCODE_VERSION=latest
 
-# Install OpenCode CLI as root, then change ownership
+# Install OpenCode CLI as root, then fix ownership
 RUN if [ "$OPENCODE_VERSION" = "latest" ]; then \
-      curl -fsSL https://opencode.ai/install.sh | sh; \
+      npm install -g opencode-ai; \
     else \
-      curl -fsSL https://opencode.ai/install.sh | sh -s -- --version $OPENCODE_VERSION; \
-    fi
+      npm install -g opencode-ai@$OPENCODE_VERSION; \
+    fi && \
+    chown -R opencode:opencode /usr/local/lib/node_modules /usr/local/bin/opencode
 
-# Create directories for OpenCode data and set ownership
-RUN mkdir -p /home/opencode/.config /home/opencode/.local && \
+# Create directories that OpenCode needs with proper permissions
+RUN mkdir -p /home/opencode/.config /home/opencode/.local/share /home/opencode/.local/state && \
     chown -R opencode:opencode /home/opencode
+
+# Create entrypoint script to fix volume permissions (runs as root)
+RUN echo '#!/bin/bash' > /usr/local/bin/opencode-entrypoint.sh && \
+    echo '# Fix ownership of mounted volumes if they are root-owned' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'for dir in .config .local .local/share .local/state .local/share/opencode; do' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  if [ -d "/home/opencode/$dir" ] && [ "$(stat -c %U "/home/opencode/$dir" 2>/dev/null)" = "root" ]; then' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '    chown -R opencode:opencode "/home/opencode/$dir"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  fi' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'done' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '# Run OpenCode as the opencode user' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'exec su - opencode -c "opencode web --hostname 0.0.0.0 --port 4096 $@"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    chmod +x /usr/local/bin/opencode-entrypoint.sh
 
 # Expose the default port (can be overridden)
 EXPOSE 4096
@@ -48,9 +74,9 @@ EXPOSE 4096
 ENV OPENCODE_HOSTNAME=0.0.0.0
 ENV OPENCODE_PORT=4096
 
-# Switch to non-root user
-USER opencode
+# Don't switch users here - entrypoint handles it
+# USER opencode
 WORKDIR /home/opencode
 
-# Run the OpenCode web server
-CMD ["opencode", "web", "--hostname", "0.0.0.0", "--port", "4096"]
+# Run the OpenCode web server via entrypoint
+ENTRYPOINT ["/usr/local/bin/opencode-entrypoint.sh"]
