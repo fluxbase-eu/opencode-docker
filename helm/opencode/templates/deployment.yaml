@@ -56,6 +56,7 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          workingDir: /home/opencode/workspace
           env:
             # Point to the ConfigMap-mounted config file
             - name: OPENCODE_CONFIG
@@ -172,7 +173,7 @@ spec:
             {{- end }}
             {{- if .Values.persistence.workspace.enabled }}
             - name: workspace
-              mountPath: /workspace
+              mountPath: /home/opencode/workspace
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}

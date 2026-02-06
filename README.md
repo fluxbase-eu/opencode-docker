@@ -15,7 +15,7 @@ Docker image for running [OpenCode](https://opencode.ai) as a web server.
 ## Usage
 
 ```bash
-docker run -p 4096:4096 ghcr.io/fluxbase-eu/opencode-docker:latest
+docker run -p 4000:4000 ghcr.io/fluxbase-eu/opencode-docker:latest
 ```
 
 ### With Volume Mount (Recommended)
@@ -23,7 +23,7 @@ docker run -p 4096:4096 ghcr.io/fluxbase-eu/opencode-docker:latest
 Mount a local directory to `/workspace` to persist your work:
 
 ```bash
-docker run -p 4096:4096 \
+docker run -p 4000:4000 \
   -v $(pwd)/workspace:/workspace \
   ghcr.io/fluxbase-eu/opencode-docker:latest
 ```
@@ -31,7 +31,7 @@ docker run -p 4096:4096 \
 ### With Authentication
 
 ```bash
-docker run -p 4096:4096 \
+docker run -p 4000:4000 \
   -v $(pwd)/workspace:/workspace \
   -e OPENCODE_SERVER_PASSWORD=your-secret-password \
   ghcr.io/fluxbase-eu/opencode-docker:latest
@@ -53,7 +53,7 @@ docker run -p 8080:8080 \
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OPENCODE_HOSTNAME` | Host to bind to | `0.0.0.0` |
-| `OPENCODE_PORT` | Port to listen on | `4096` |
+| `OPENCODE_PORT` | Port to listen on | `4000` |
 | `OPENCODE_SERVER_PASSWORD` | Optional password for authentication | (none) |
 | `OPENCODE_SERVER_USERNAME` | Username for authentication | `opencode` |
 
@@ -80,7 +80,7 @@ The repository includes `opencode.json` with environment variable placeholders.
 
 Run with environment variables:
 ```bash
-docker run -p 4096:4096 \
+docker run -p 4000:4000 \
   -v $(pwd)/opencode.json:/etc/opencode/opencode.json:ro \
   -e OPENCODE_MODEL=anthropic/claude-sonnet-4-5 \
   -e ANTHROPIC_API_KEY=sk-ant-your-key-here \
@@ -135,14 +135,14 @@ OpenCode stores data in three locations that should be persisted for a better us
 
 #### Minimal (workspace only)
 ```bash
-docker run -p 4096:4096 \
+docker run -p 4000:4000 \
   -v $(pwd)/workspace:/workspace \
   ghcr.io/fluxbase-eu/opencode-docker:latest
 ```
 
 #### Full persistence (recommended)
 ```bash
-docker run -p 4096:4096 \
+docker run -p 4000:4000 \
   -v opencode-config:/home/opencode/.config/opencode \
   -v opencode-data:/home/opencode/.local/share/opencode \
   -v opencode-workspace:/workspace \
@@ -306,7 +306,7 @@ extraVolumeMounts: []
 # Service configuration
 service:
   type: ClusterIP
-  port: 4096
+  port: 4000
 
 # Resources
 resources:
@@ -361,7 +361,7 @@ gatewayAPI:
       - backendRefs:
           - name: opencode
             kind: Service
-            port: 4096
+            port: 4000
         matches:
           - path:
               type: Prefix
@@ -402,7 +402,7 @@ gatewayAPI:
       - backendRefs:
           - name: opencode
             kind: Service
-            port: 4096
+            port: 4000
         matches:
           - path:
               type: Prefix
@@ -492,7 +492,7 @@ helm upgrade opencode ./helm/opencode
 helm uninstall opencode
 
 # Port forward to access locally
-kubectl port-forward svc/opencode 4096:4096
+kubectl port-forward svc/opencode 4000:4000
 ```
 
 ### Persistent Volume Claims

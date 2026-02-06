@@ -52,7 +52,7 @@ securityContext:
 
 service:
   type: ClusterIP
-  port: 4096
+  port: 4000
   # Service labels and annotations (in addition to global labels/annotations)
   labels: {}
   annotations: {}
@@ -71,7 +71,7 @@ ingress:
   #   service:
   #     name: ""
   #     port:
-  #       number: 4096
+  #       number: 4000
   hosts:
     - host: opencode.example.com
       paths:
@@ -81,7 +81,7 @@ ingress:
             service:
               name: opencode
               port:
-                number: 4096
+                number: 4000
   tls: []
   #  - secretName: opencode-tls
   #    hosts:
@@ -113,7 +113,7 @@ gatewayAPI:
       - backendRefs:
           - name: opencode
             kind: Service
-            port: 4096
+            port: 4000
         matches:
           - path:
               type: Prefix
@@ -143,7 +143,7 @@ opencode:
   # Server settings
   server:
     hostname: "0.0.0.0"
-    port: 4096
+    port: 4000
     # Optional: mDNS configuration
     # mdns: true
     # mdnsDomain: "opencode.local"

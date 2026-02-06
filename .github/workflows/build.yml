@@ -206,7 +206,7 @@ jobs:
             ### Quick Start
 
             ```bash
-            docker run -p 4096:4096 ghcr.io/fluxbase-eu/opencode-docker:${{ steps.version.outputs.version }}
+            docker run -p 4000:4000 ghcr.io/fluxbase-eu/opencode-docker:${{ steps.version.outputs.version }}
             ```
 
             ### Available Tags

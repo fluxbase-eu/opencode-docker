@@ -46,19 +46,6 @@
         "timeout": 300000,
         "apiKey": "{env:OPENROUTER_API_KEY}"
       }
-    },
-    "zai-coding-plan": {
-      "name": "Z.AI Coding Plan",
-      "options": {
-        "timeout": 300000,
-        "baseURL": "{env:ZAI_BASE_URL}",
-        "apiKey": "{env:ZAI_API_KEY}"
-      },
-      "models": {
-        "glm-4.7": {
-          "name": "glm-4.7"
-        }
-      }
     }
   },
   "tools": {

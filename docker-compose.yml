@@ -3,7 +3,7 @@ services:
     image: ghcr.io/fluxbase-eu/opencode-docker:latest
     container_name: opencode
     ports:
-      - "${OPENCODE_PORT:-4096}:4096"
+      - "${OPENCODE_PORT:-4000}:4000"
     environment:
       # Path to OpenCode config file (mounted below)
       - OPENCODE_CONFIG=/etc/opencode/opencode.json
@@ -33,10 +33,10 @@ services:
       - opencode-data:/home/opencode/.local/share/opencode
 
       # Working directory for projects
-      - opencode-workspace:/workspace
+      - opencode-workspace:/home/opencode/workspace
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4096/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

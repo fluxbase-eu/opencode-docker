@@ -50,33 +50,33 @@ RUN if [ "$OPENCODE_VERSION" = "latest" ]; then \
     fi && \
     chown -R opencode:opencode /usr/local/lib/node_modules /usr/local/bin/opencode
 
-# Create directories that OpenCode needs with proper permissions
+# Create directories that OpenCode needs
 RUN mkdir -p /home/opencode/.config /home/opencode/.local/share /home/opencode/.local/state && \
     chown -R opencode:opencode /home/opencode
 
-# Create entrypoint script to fix volume permissions (runs as root)
+# Create entrypoint to fix volume permissions at startup
 RUN echo '#!/bin/bash' > /usr/local/bin/opencode-entrypoint.sh && \
-    echo '# Fix ownership of mounted volumes if they are root-owned' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo 'for dir in .config .local .local/share .local/state .local/share/opencode; do' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '  if [ -d "/home/opencode/$dir" ] && [ "$(stat -c %U "/home/opencode/$dir" 2>/dev/null)" = "root" ]; then' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '    chown -R opencode:opencode "/home/opencode/$dir"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '# Fix ownership of any root-owned directories' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'for dir in .config .local .local/share .local/state .local/share/opencode workspace; do' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  dir_path="/home/opencode/$dir"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  if [ -d "$dir_path" ] && [ "$(stat -c %U "$dir_path" 2>/dev/null)" = "root" ]; then' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '    chown -R opencode:opencode "$dir_path"' >> /usr/local/bin/opencode-entrypoint.sh && \
     echo '  fi' >> /usr/local/bin/opencode-entrypoint.sh && \
     echo 'done' >> /usr/local/bin/opencode-entrypoint.sh && \
     echo '' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '# Run OpenCode as the opencode user' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo 'exec su - opencode -c "opencode web --hostname 0.0.0.0 --port 4096 $@"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '# Drop privileges and run as opencode user' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'exec su - opencode -c "$*"' >> /usr/local/bin/opencode-entrypoint.sh && \
     chmod +x /usr/local/bin/opencode-entrypoint.sh
 
 # Expose the default port (can be overridden)
-EXPOSE 4096
+EXPOSE 4000
 
 # Set default environment variables
 ENV OPENCODE_HOSTNAME=0.0.0.0
-ENV OPENCODE_PORT=4096
+ENV OPENCODE_PORT=4000
 
 # Don't switch users here - entrypoint handles it
-# USER opencode
-WORKDIR /home/opencode
+WORKDIR /home/opencode/workspace
 
 # Run the OpenCode web server via entrypoint
-ENTRYPOINT ["/usr/local/bin/opencode-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/opencode-entrypoint.sh", "opencode", "web", "--hostname", "0.0.0.0", "--port", "4000"]
