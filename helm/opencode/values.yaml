@@ -184,6 +184,18 @@ extraVolumeMounts: []
 #   - name: pvc-volume
 #     mountPath: /data/custom
 
+# Extra containers to add to the pod (sidecars)
+extraContainers: []
+# Example:
+# extraContainers:
+#   - name: sidecar
+#     image: busybox
+#     command: ["/bin/sh"]
+#     args: ["-c", "while true; do echo hello; sleep 10;done"]
+#     volumeMounts:
+#       - name: workspace
+#         mountPath: /home/opencode/workspace
+
 persistence:
   enabled: true
   # Storage class for PVCs
