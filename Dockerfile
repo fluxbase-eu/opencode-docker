@@ -54,18 +54,23 @@ RUN if [ "$OPENCODE_VERSION" = "latest" ]; then \
 RUN mkdir -p /home/opencode/.config /home/opencode/.local/share /home/opencode/.local/state && \
     chown -R opencode:opencode /home/opencode
 
-# Create entrypoint to fix volume permissions at startup
+# Create entrypoint to fix volume permissions at startup (only if running as root)
 RUN echo '#!/bin/bash' > /usr/local/bin/opencode-entrypoint.sh && \
-    echo '# Fix ownership of any root-owned directories' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo 'for dir in .config .local .local/share .local/state .local/share/opencode workspace; do' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '  dir_path="/home/opencode/$dir"' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '  if [ -d "$dir_path" ] && [ "$(stat -c %U "$dir_path" 2>/dev/null)" = "root" ]; then' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '    chown -R opencode:opencode "$dir_path"' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '  fi' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo 'done' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo '# Drop privileges and run as opencode user' >> /usr/local/bin/opencode-entrypoint.sh && \
-    echo 'exec su - opencode -c "$*"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '# If running as root, fix permissions and drop privileges' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'if [ "$(id -u)" = "0" ]; then' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  # Fix ownership of any root-owned directories' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  for dir in .config .local .local/share .local/state .local/share/opencode workspace; do' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '    dir_path="/home/opencode/$dir"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '    if [ -d "$dir_path" ] && [ "$(stat -c %U "$dir_path" 2>/dev/null)" = "root" ]; then' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '      chown -R opencode:opencode "$dir_path"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '    fi' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  done' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  # Drop privileges and run as opencode user' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  exec runuser -u opencode -- "$@"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'else' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  # Already running as non-root user (e.g., Kubernetes with runAsUser)' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo '  exec "$@"' >> /usr/local/bin/opencode-entrypoint.sh && \
+    echo 'fi' >> /usr/local/bin/opencode-entrypoint.sh && \
     chmod +x /usr/local/bin/opencode-entrypoint.sh
 
 # Expose the default port (can be overridden)
