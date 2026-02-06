@@ -20,9 +20,12 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  {{- with .Values.gatewayAPI.gatewaySelector.matchLabels }}
+  {{- if .Values.gatewayAPI.httpRoute.parentRefs }}
   parentRefs:
-    {{- range $key, $value := . }}
+    {{- toYaml .Values.gatewayAPI.httpRoute.parentRefs | nindent 4 }}
+  {{- else if .Values.gatewayAPI.gatewaySelector.matchLabels }}
+  parentRefs:
+    {{- range $key, $value := .Values.gatewayAPI.gatewaySelector.matchLabels }}
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: {{ $key }}

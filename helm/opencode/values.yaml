@@ -91,7 +91,7 @@ ingress:
 gatewayAPI:
   enabled: false
 
-  # Gateway reference (optional - if not specified, uses the default gateway)
+  # Gateway reference (optional - deprecated, use httpRoute.parentRefs instead)
   gatewaySelector:
     # Gateway labels to attach to
     matchLabels:
@@ -103,6 +103,16 @@ gatewayAPI:
     # HTTPRoute labels and annotations (in addition to global labels/annotations)
     labels: {}
     annotations: {}
+
+    # Parent references (which gateways to attach this route to)
+    # If not specified, attaches to all gateways in the namespace
+    parentRefs: []
+    # Example:
+    # parentRefs:
+    #   - name: external-gateway
+    #     namespace: infrastructure
+    #   - name: my-gateway
+    #     sectionName: http
 
     # Hostnames for the route
     hostnames:
