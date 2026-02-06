@@ -9,10 +9,9 @@ keywords:
   - opencode
   - ai
   - coding-assistant
-  - anthropic
 home: https://github.com/fluxbase-eu/opencode-docker
 sources:
-  - https://github.com/anthropics/opencode
+  - https://github.com/anomalyco/opencode
   - https://github.com/fluxbase-eu/opencode-docker
 maintainers:
   - name: fluxbase-eu
