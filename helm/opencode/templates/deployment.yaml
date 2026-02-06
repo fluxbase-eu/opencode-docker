@@ -58,12 +58,6 @@ spec:
               protocol: TCP
           workingDir: /home/opencode/workspace
           env:
-            {{- if .Values.opencode.configMap }}
-            # Point to the ConfigMap-mounted config file
-            - name: OPENCODE_CONFIG
-              value: /etc/opencode/opencode.json
-            {{- end }}
-
             # Extra environment variables
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
@@ -102,12 +96,6 @@ spec:
             failureThreshold: {{ .Values.probes.startup.failureThreshold }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.opencode.configMap }}
-            # Mount the ConfigMap containing OpenCode config (optional)
-            - name: opencode-config
-              mountPath: /etc/opencode
-              readOnly: true
-            {{- end }}
             {{- if .Values.persistence.config.enabled }}
             - name: config
               mountPath: /home/opencode/.config/opencode
@@ -126,12 +114,6 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
-        {{- if .Values.opencode.configMap }}
-        # ConfigMap with OpenCode configuration (optional)
-        - name: opencode-config
-          configMap:
-            name: {{ include "opencode.fullname" . }}
-        {{- end }}
         {{- if .Values.persistence.config.enabled }}
         - name: config
           persistentVolumeClaim:
