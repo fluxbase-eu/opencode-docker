@@ -5,10 +5,7 @@ services:
     ports:
       - "${OPENCODE_PORT:-4000}:4000"
     environment:
-      # Path to OpenCode config file (mounted below)
-      - OPENCODE_CONFIG=/etc/opencode/opencode.json
-
-      # Model configuration (referenced by config file)
+      # Model configuration (optional - can also be set in UI)
       - OPENCODE_MODEL=${OPENCODE_MODEL:-anthropic/claude-sonnet-4-5}
       - OPENCODE_SMALL_MODEL=${OPENCODE_SMALL_MODEL:-anthropic/claude-haiku-4-5}
 
@@ -25,10 +22,7 @@ services:
       # - OPENCODE_AUTOUPDATE=${OPENCODE_AUTOUPDATE:-true}
       # - OPENCODE_SHARE=${OPENCODE_SHARE:-manual}
     volumes:
-      # Mount custom config file (see opencode.json.example)
-      - ./opencode.json:/etc/opencode/opencode.json:ro
-
-      # Persistent configuration and user preferences
+      # Persistent configuration (UI config saved here)
       - opencode-config:/home/opencode/.config/opencode
 
       # Session storage, cache, and auth credentials

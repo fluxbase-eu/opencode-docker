@@ -1,3 +1,4 @@
+{{- if .Values.opencode.configMap }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -186,3 +187,4 @@ data:
       "tools": {{ .Values.opencode.tools | toJson }}
       {{- end }}
     }
+{{- end }}

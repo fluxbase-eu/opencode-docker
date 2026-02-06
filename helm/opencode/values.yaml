@@ -140,6 +140,11 @@ gatewayAPI:
 # OpenCode Configuration
 # See: https://opencode.ai/docs/config/
 opencode:
+  # Create a ConfigMap with base configuration (optional)
+  # Set to true to use declarative configuration via Helm values
+  # Set to false to configure everything via the UI
+  configMap: false
+
   # Server settings
   server:
     hostname: "0.0.0.0"
