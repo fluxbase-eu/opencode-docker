@@ -7,6 +7,7 @@ services:
     environment:
       # Optional server password for authentication
       # - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-}
+      {}
     volumes:
       # Persistent configuration (UI config saved here)
       - opencode-config:/home/opencode/.config/opencode
