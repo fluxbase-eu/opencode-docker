@@ -13,11 +13,13 @@ services:
       - OPENCODE_SMALL_MODEL=${OPENCODE_SMALL_MODEL:-anthropic/claude-haiku-4-5}
 
       # API keys (referenced by config file using {env:VAR_NAME})
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - ZAI_API_KEY=${ZAI_API_KEY:-}
+      - ZAI_BASE_URL=${ZAI_BASE_URL:-}
 
       # Optional: Override specific config values with env vars
       # - OPENCODE_AUTOUPDATE=${OPENCODE_AUTOUPDATE:-true}
