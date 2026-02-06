@@ -64,65 +64,6 @@ spec:
               value: /etc/opencode/opencode.json
             {{- end }}
 
-            # Model configuration (can also be set via UI)
-            {{- if .Values.opencode.model }}
-            - name: OPENCODE_MODEL
-              value: {{ .Values.opencode.model | quote }}
-            {{- end }}
-            {{- if .Values.opencode.smallModel }}
-            - name: OPENCODE_SMALL_MODEL
-              value: {{ .Values.opencode.smallModel | quote }}
-            {{- end }}
-
-            # API keys from secrets (referenced by the config file)
-            {{- if and .Values.secrets.anthropicApiKey .Values.secrets.anthropicApiKey.enabled }}
-            - name: ANTHROPIC_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.anthropicApiKey.name }}
-                  key: {{ .Values.secrets.anthropicApiKey.key }}
-            {{- end }}
-
-            {{- if and .Values.secrets.openaiApiKey .Values.secrets.openaiApiKey.enabled }}
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.openaiApiKey.name }}
-                  key: {{ .Values.secrets.openaiApiKey.key }}
-            {{- end }}
-
-            {{- if and .Values.secrets.geminiApiKey .Values.secrets.geminiApiKey.enabled }}
-            - name: GEMINI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.geminiApiKey.name }}
-                  key: {{ .Values.secrets.geminiApiKey.key }}
-            {{- end }}
-
-            {{- if and .Values.secrets.googleApiKey .Values.secrets.googleApiKey.enabled }}
-            - name: GOOGLE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.googleApiKey.name }}
-                  key: {{ .Values.secrets.googleApiKey.key }}
-            {{- end }}
-
-            {{- if and .Values.secrets.openrouterApiKey .Values.secrets.openrouterApiKey.enabled }}
-            - name: OPENROUTER_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.openrouterApiKey.name }}
-                  key: {{ .Values.secrets.openrouterApiKey.key }}
-            {{- end }}
-
-            {{- if and .Values.secrets.zaiApiKey .Values.secrets.zaiApiKey.enabled }}
-            - name: ZAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.zaiApiKey.name }}
-                  key: {{ .Values.secrets.zaiApiKey.key }}
-            {{- end }}
-
             # Extra environment variables
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}

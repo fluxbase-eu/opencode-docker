@@ -246,52 +246,25 @@ opencode:
   # Disabled providers
   # disabledProviders: ["openai", "gemini"]
 
-# Secret references for sensitive values
-# These will be injected as environment variables using secretKeyRef
-secrets:
-  # Anthropic API key
-  anthropicApiKey:
-    name: opencode-credentials
-    key: anthropic-api-key
-    enabled: true
-
-  # OpenAI API key
-  # openaiApiKey:
-  #   name: opencode-credentials
-  #   key: openai-api-key
-  #   enabled: false
-
-  # Gemini API key
-  # geminiApiKey:
-  #   name: opencode-credentials
-  #   key: gemini-api-key
-  #   enabled: false
-
-  # Google API key (for Vertex AI)
-  # googleApiKey:
-  #   name: opencode-credentials
-  #   key: google-api-key
-  #   enabled: false
-
-  # OpenRouter API key
-  # openrouterApiKey:
-  #   name: opencode-credentials
-  #   key: openrouter-api-key
-  #   enabled: false
-
-  # Z.AI API key
-  # zaiApiKey:
-  #   name: opencode-credentials
-  #   key: zai-api-key
-  #   enabled: false
+# Note: API keys and model configuration are now configured through the OpenCode UI.
+# The secrets section below is no longer used and can be ignored.
+# Users configure providers via the UI settings.
 
 # ConfigMap labels and annotations (in addition to global labels/annotations)
 configMap:
   labels: {}
   annotations: {}
 
-# Extra environment variables (beyond those from secrets and config)
+# Extra environment variables (optional)
+# You can add custom environment variables here if needed
 extraEnv: []
+# - name: CUSTOM_VAR
+#   value: "custom-value"
+# - name: FROM_SECRET
+#   valueFrom:
+#     secretKeyRef:
+#       name: my-secret
+#       key: my-key
 # Example:
 # extraEnv:
 #   - name: CUSTOM_VAR
