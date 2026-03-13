@@ -9,10 +9,10 @@ keywords:
   - opencode
   - ai
   - coding-assistant
-home: https://github.com/fluxbase-eu/opencode-docker
+home: https://github.com/nimbleflux/opencode-docker
 sources:
   - https://github.com/anomalyco/opencode
-  - https://github.com/fluxbase-eu/opencode-docker
+  - https://github.com/nimbleflux/opencode-docker
 maintainers:
-  - name: fluxbase-eu
-    url: https://github.com/fluxbase-eu
+  - name: nimbleflux
+    url: https://github.com/nimbleflux

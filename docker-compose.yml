@@ -1,6 +1,6 @@
 services:
   opencode:
-    image: ghcr.io/fluxbase-eu/opencode-docker:latest
+    image: ghcr.io/nimbleflux/opencode-docker:latest
     container_name: opencode
     ports:
       - "${OPENCODE_PORT:-4000}:4000"

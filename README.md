@@ -24,14 +24,14 @@ This repository provides:
 ```bash
 docker run -p 4000:4000 \
   -v opencode-workspace:/home/opencode/workspace \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
+  ghcr.io/nimbleflux/opencode-docker:latest
 ```
 
 ### Docker Compose (Recommended)
 
 ```bash
 # Clone the repository
-git clone https://github.com/fluxbase-eu/opencode-docker.git
+git clone https://github.com/nimbleflux/opencode-docker.git
 cd opencode-docker
 
 # Start OpenCode
@@ -44,7 +44,7 @@ docker-compose up -d
 
 ```bash
 # Install from GHCR
-helm install opencode oci://ghcr.io/fluxbase-eu/opencode
+helm install opencode oci://ghcr.io/nimbleflux/opencode
 
 # Or install from local directory
 helm install opencode ./helm/opencode
@@ -156,7 +156,7 @@ OpenCode stores data in three locations that should be persisted:
 ```bash
 docker run -p 4000:4000 \
   -v $(pwd)/workspace:/home/opencode/workspace \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
+  ghcr.io/nimbleflux/opencode-docker:latest
 ```
 
 #### Full persistence (recommended)
@@ -166,7 +166,7 @@ docker run -p 4000:4000 \
   -v opencode-config:/home/opencode/.config/opencode \
   -v opencode-data:/home/opencode/.local/share/opencode \
   -v opencode-workspace:/home/opencode/workspace \
-  ghcr.io/fluxbase-eu/opencode-docker:latest
+  ghcr.io/nimbleflux/opencode-docker:latest
 ```
 
 ---
@@ -304,7 +304,7 @@ helm uninstall opencode
 kubectl port-forward svc/opencode 4000:4000
 
 # List available Helm chart versions
-helm search repo ghcr.io/fluxbase-eu/opencode --versions
+helm search repo ghcr.io/nimbleflux/opencode --versions
 ```
 
 ---
@@ -354,9 +354,9 @@ helm package helm/opencode
 
 - **OpenCode**: https://opencode.ai
 - **OpenCode Documentation**: https://opencode.ai/docs/config/
-- **Docker Image**: ghcr.io/fluxbase-eu/opencode-docker
-- **Helm Chart**: ghcr.io/fluxbase-eu/opencode
-- **Issue Tracker**: https://github.com/fluxbase-eu/opencode-docker/issues
+- **Docker Image**: ghcr.io/nimbleflux/opencode-docker
+- **Helm Chart**: ghcr.io/nimbleflux/opencode
+- **Issue Tracker**: https://github.com/nimbleflux/opencode-docker/issues
 
 ---
 

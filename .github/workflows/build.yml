@@ -14,7 +14,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: fluxbase-eu/opencode-docker
+  IMAGE_NAME: nimbleflux/opencode-docker
 
 permissions:
   contents: write
@@ -134,7 +134,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=OpenCode Docker
             org.opencontainers.image.description=Docker image for OpenCode AI coding assistant
-            org.opencontainers.image.vendor=fluxbase-eu
+            org.opencontainers.image.vendor=nimbleflux
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
 
       - name: Build and push Docker image
@@ -195,18 +195,18 @@ jobs:
 
             Pull this version:
             ```bash
-            docker pull ghcr.io/fluxbase-eu/opencode-docker:${{ steps.version.outputs.version }}
+            docker pull ghcr.io/nimbleflux/opencode-docker:${{ steps.version.outputs.version }}
             ```
 
             Or use latest:
             ```bash
-            docker pull ghcr.io/fluxbase-eu/opencode-docker:latest
+            docker pull ghcr.io/nimbleflux/opencode-docker:latest
             ```
 
             ### Quick Start
 
             ```bash
-            docker run -p 4000:4000 ghcr.io/fluxbase-eu/opencode-docker:${{ steps.version.outputs.version }}
+            docker run -p 4000:4000 ghcr.io/nimbleflux/opencode-docker:${{ steps.version.outputs.version }}
             ```
 
             ### Available Tags

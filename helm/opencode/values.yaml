@@ -1,7 +1,7 @@
 # Default values for opencode Helm chart
 
 image:
-  repository: ghcr.io/fluxbase-eu/opencode-docker
+  repository: ghcr.io/nimbleflux/opencode-docker
   pullPolicy: IfNotPresent
   tag: "latest"
 
